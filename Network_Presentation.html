@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Network Architecture - Professional Presentation</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --bg-color: #f8f9fa;
+            --card-bg-color: #ffffff;
+            --text-color: #212529;
+            --border-color: #dee2e6;
+            --code-bg-color: #e9ecef;
+            --router-bg: #e7f1ff;
+            --switch-bg: #e8f5e9;
+            --cloud-bg: #f3e5f5;
+            --lan-bg: #fff8e1;
+            --link-color: #adb5bd;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.7;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 2rem;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: auto;
+            background: var(--card-bg-color);
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.07);
+        }
+
+        h1, h2, h3 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: #343a40;
+        }
+        
+        h2 {
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 1rem;
+            text-align: center; 
+        }
+        
+        h3 {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+            font-weight: 500;
+            color: #343a40;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center; 
+        }
+
+        .tab-button {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--secondary-color);
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            margin-bottom: -2px;
+        }
+
+        .tab-button:hover { color: var(--primary-color); }
+        .tab-button.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-content { display: none; animation: fadeIn 0.5s ease-in-out; }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .diagram-container {
+            padding: 2rem;
+            border-radius: 12px;
+            background-color: #fcfdff;
+            border: 1px solid #e9f0f8;
+            overflow-x: auto;
+        }
+        #topology-diagram {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: block;
+            margin: 0 auto;
+        }
+
+        .diagram { text-align: center; }
+        .device-tier {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 2rem 0;
+            position: relative;
+        }
+        .device, .cloud, .lan-block {
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .device:hover, .cloud:hover, .lan-block:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            border-color: var(--primary-color);
+        }
+        .device-icon { margin-bottom: 0.5rem; }
+        .device-name { font-weight: 700; font-size: 1.1rem; }
+        .device-info { font-size: 0.8rem; color: var(--secondary-color); }
+
+        .router { background-color: var(--router-bg); border-color: #b3d4ff; }
+        .switch { background-color: var(--switch-bg); border-color: #b9f6ca; }
+        .cloud { background-color: var(--cloud-bg); border-color: #e1bee7; width: 250px; }
+        .lan-block { background-color: var(--lan-bg); border-color: #fff59d; }
+        
+        .link-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 60px;
+            position: relative;
+        }
+        .link { background-color: var(--link-color); }
+        .link.vertical { width: 3px; height: 100%; }
+        .link.horizontal {
+            height: 3px;
+            position: absolute;
+            left: 20%;
+            right: 20%;
+        }
+        .dlci-label {
+            position: absolute;
+            top: -20px;
+            font-size: 0.75rem;
+            background-color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--secondary-color);
+            border: 1px solid var(--border-color);
+        }
+        .dlci-1 { left: 15%; }
+        .dlci-2 { left: 50%; transform: translateX(-50%); }
+        .dlci-3 { right: 15%; }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .grid-card {
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+        .branch-diagram {
+            display: grid;
+            grid-template-rows: auto auto auto auto;
+            justify-items: center;
+            gap: 1rem;
+        }
+        .branch-link-t-junction {
+            width: 100%;
+            height: 40px;
+            position: relative;
+        }
+        .branch-link-t-junction .vertical {
+            width: 3px;
+            height: 20px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 0;
+        }
+        .branch-link-t-junction .horizontal {
+            height: 3px;
+            position: absolute;
+            top: 20px;
+            left: 25%;
+            right: 25%;
+        }
+        .branch-link-t-junction .vertical.down-1 { height: 20px; top: 20px; left: 25%; }
+        .branch-link-t-junction .vertical.down-2 { height: 20px; top: 20px; left: 75%; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden; }
+        th, td { padding: 1rem; border: 1px solid var(--border-color); text-align: left; }
+        thead th { background-color: var(--primary-color); color: white; font-weight: 500; }
+        tbody tr:nth-child(even) { background-color: #fdfdff; }
+        tbody tr:hover { background-color: #f1f7ff; }
+        code { background-color: var(--code-bg-color); padding: 0.2em 0.4em; border-radius: 3px; font-family: 'Consolas', 'Menlo', 'Courier New', monospace; }
+        .protocols-list { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+        .protocols-list li { background: #fdfdff; border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 8px; display: flex; align-items: flex-start; transition: all 0.3s ease; }
+        .protocols-list li:hover { transform: translateY(-5px); box-shadow: 0 6px 20px rgba(0,0,0,0.07); }
+        .protocol-icon { flex-shrink: 0; margin-right: 1rem; color: var(--primary-color); width: 24px; height: 24px; }
+        
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            .container { padding: 1.5rem; }
+            .grid-layout, .protocols-list { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Enterprise Network Architecture</h1>
+
+        <div class="tabs">
+            <button class="tab-button active" data-tab="tab-overview">Overview</button>
+            <button class="tab-button" data-tab="tab-branches">Branch Details</button>
+            <button class="tab-button" data-tab="tab-topology">Full Topology</button>
+            <button class="tab-button" data-tab="tab-wan">WAN & Frame Relay</button>
+            <button class="tab-button" data-tab="tab-telephony">Telephony</button>
+            <button class="tab-button" data-tab="tab-hardware">Hardware</button>
+            <button class="tab-button" data-tab="tab-plan">VLAN & IP Plan</button>
+            <button class="tab-button" data-tab="tab-protocols">Protocols & Services</button>
+        </div>
+
+        <div id="tab-overview" class="tab-content active">
+            <h2>Overall Network Topology</h2>
+            <div class="diagram-container">
+                <div class="diagram">
+                    <div class="device-tier">
+                        <div class="cloud">
+                            <svg class="device-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+                            <div class="device-name">Frame Relay WAN</div>
+                            <div class="device-info">Full Mesh, OSPF Area 0</div>
+                        </div>
+                    </div>
+                    <div class="link-container">
+                        <div class="link vertical"></div>
+                        <div class="link horizontal"></div>
+                        <div class="dlci-label dlci-1">HQ &lt;=&gt; BR1</div>
+                        <div class="dlci-label dlci-2">HQ &lt;=&gt; BR2</div>
+                        <div class="dlci-label dlci-3">BR1 &lt;=&gt; BR2</div>
+                    </div>
+                    <div class="device-tier">
+                        <div class="device router">
+                            <svg class="device-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                            <div class="device-name">HQ-Router</div>
+                            <div class="device-info">City A</div>
+                        </div>
+                        <div class="device router">
+                            <svg class="device-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                            <div class="device-name">BR1-Router</div>
+                            <div class="device-info">City B</div>
+                        </div>
+                        <div class="device router">
+                            <svg class="device-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                            <div class="device-name">BR2-Router</div>
+                            <div class="device-info">City C</div>
+                        </div>
+                    </div>
+                    <div class="link-container">
+                        <div class="link vertical" style="position:absolute; left: 16.66%;"></div>
+                        <div class="link vertical" style="position:absolute; left: 50%;"></div>
+                        <div class="link vertical" style="position:absolute; left: 83.33%;"></div>
+                    </div>
+                    <div class="device-tier">
+                        <div class="lan-block"><div class="device-name">HQ LAN</div></div>
+                        <div class="lan-block"><div class="device-name">BR1 LAN</div></div>
+                        <div class="lan-block"><div class="device-name">BR2 LAN</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-branches" class="tab-content">
+            <h2>Detailed Branch Schemas</h2>
+            <div class="grid-layout">
+                <div class="grid-card">
+                    <h3>1. Headquarters (HQ)</h3>
+                    <div class="branch-diagram">
+                        <div class="device router">
+                             <svg class="device-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                            <div class="device-name">HQ-Router</div><div class="device-info">Gateway, Central CME & DHCP Server</div>
+                        </div>
+                        <div class="link-container" style="height:40px;"><div class="link vertical"></div></div>
+                        <div class="device switch">
+                            <svg class="device-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                            <div class="device-name">HQ-L3-SW1</div><div class="device-info">L2 Core, STP Root</div>
+                        </div>
+                        <div class="branch-link-t-junction">
+                            <div class="link vertical"></div><div class="link horizontal"></div>
+                            <div class="link vertical down-1"></div><div class="link vertical down-2"></div>
+                        </div>
+                        <div class="device-tier" style="width:100%; margin:0;">
+                            <div class="device switch">
+                                <svg class="device-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                                <div class="device-name">HQ-L2-SW1</div><div class="device-info">Access Layer</div>
+                            </div>
+                            <div class="device switch">
+                                <svg class="device-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                                <div class="device-name">HQ-L2-SW2</div><div class="device-info">Access Layer</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid-card">
+                    <h3>2. Branch 1 (BR1)</h3>
+                    <div class="branch-diagram">
+                         <div class="device router">
+                             <svg class="device-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                            <div class="device-name">BR1-Router</div><div class="device-info">Gateway, Voice Gateway & DHCP Server</div>
+                        </div>
+                        <div class="link-container" style="height:40px;"><div class="link vertical"></div></div>
+                        <div class="device switch">
+                            <svg class="device-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                            <div class="device-name">BR1-L3-SW1</div><div class="device-info">L2 Core, STP Root</div>
+                        </div>
+                        <div class="branch-link-t-junction">
+                            <div class="link vertical"></div><div class="link horizontal"></div>
+                            <div class="link vertical down-1"></div><div class="link vertical down-2"></div>
+                        </div>
+                        <div class="device-tier" style="width:100%; margin:0;">
+                            <div class="device switch">
+                                <svg class="device-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                                <div class="device-name">BR1-L2-SW1</div><div class="device-info">Access Layer</div>
+                            </div>
+                            <div class="device switch">
+                                <svg class="device-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                                <div class="device-name">BR1-L2-SW2</div><div class="device-info">Access Layer</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                 <div class="grid-card">
+                    <h3>3. Branch 2 (BR2)</h3>
+                    <div class="branch-diagram">
+                         <div class="device router">
+                             <svg class="device-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                            <div class="device-name">BR2-Router</div><div class="device-info">Gateway, Voice Gateway & DHCP Server</div>
+                        </div>
+                        <div class="link-container" style="height:40px;"><div class="link vertical"></div></div>
+                        <div class="device switch">
+                            <svg class="device-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                            <div class="device-name">BR2-L3-SW1</div><div class="device-info">L2 Core, STP Root</div>
+                        </div>
+                        <div class="branch-link-t-junction">
+                            <div class="link vertical"></div><div class="link horizontal"></div>
+                            <div class="link vertical down-1"></div><div class="link vertical down-2"></div>
+                        </div>
+                        <div class="device-tier" style="width:100%; margin:0;">
+                            <div class="device switch">
+                                <svg class="device-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                                <div class="device-name">BR2-L2-SW1</div><div class="device-info">Access Layer</div>
+                            </div>
+                            <div class="device switch">
+                                <svg class="device-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                                <div class="device-name">BR2-L2-SW2</div><div class="device-info">Access Layer</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="tab-topology" class="tab-content">
+            <h2>Full Network Topology</h2>
+            <div class="diagram-container">
+                <p style="text-align: center; color: var(--secondary-color);">Detailed network diagram including end devices and port connections.</p>
+                <img id="topology-diagram" src="lan-schema.png" alt="Full Network Topology Diagram">
+            </div>
+        </div>
+        
+        <div id="tab-wan" class="tab-content">
+            <h2>WAN & Frame Relay</h2>
+            <ul class="protocols-list">
+                <li>
+                    <svg class="protocol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+                    <div><strong>Full-Mesh Architecture:</strong> The network utilizes a full-mesh Frame Relay topology. This allows any site to communicate directly with any other site, reducing latency and avoiding a single point of failure at the HQ.</div>
+                </li>
+                <li>
+                    <svg class="protocol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                    <div><strong>Quality of Service (QoS):</strong> The <code>WAN-QoS-Policy</code> is applied outbound on all serial interfaces to manage congestion and prioritize critical traffic like voice and call signaling over bulk data.</div>
+                </li>
+            </ul>
+             <div class="grid-layout">
+                <div class="grid-card">
+                    <h3>DLCI Mapping</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Connection</th><th>Router 1</th><th>DLCI 1</th><th>Router 2</th><th>DLCI 2</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>HQ <-> BR1</td><td>HQ-Router (S1/0.102)</td><td>102</td><td>BR1-Router (S1/0.201)</td><td>201</td></tr>
+                            <tr><td>HQ <-> BR2</td><td>HQ-Router (S1/0.103)</td><td>103</td><td>BR2-Router (S1/0.301)</td><td>301</td></tr>
+                            <tr><td>BR1 <-> BR2</td><td>BR1-Router (S1/0.203)</td><td>203</td><td>BR2-Router (S1/0.302)</td><td>302</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="grid-card">
+                    <h3>WAN IP Addressing</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Network</th><th>HQ-Router IP</th><th>BR1-Router IP</th><th>BR2-Router IP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>10.255.0.0/30</code></td><td><code>10.255.0.1</code></td><td><code>10.255.0.2</code></td><td>-</td></tr>
+                            <tr><td><code>10.255.0.4/30</code></td><td><code>10.255.0.5</code></td><td>-</td><td><code>10.255.0.6</code></td></tr>
+                            <tr><td><code>10.255.0.8/30</code></td><td>-</td><td><code>10.255.0.9</code></td><td><code>10.255.0.10</code></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-telephony" class="tab-content">
+            <h2>Telephony Architecture (VoIP)</h2>
+            <ul class="protocols-list">
+                <li>
+                    <svg class="protocol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a4.5 4.5 0 0 0-4.5 4.5V9a4.5 4.5 0 0 0 4.5 4.5 4.5 4.5 0 0 0 4.5-4.5V5.5A4.5 4.5 0 0 0 12 1z"></path><path d="M12 13.5V17a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2v-1.5"></path><path d="M8 17a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2v-1.5"></path><path d="M12 17v4"></path><path d="M10 21h4"></path></svg>
+                    <div><strong>Centralized Call Management:</strong> The entire VoIP system is managed by a <b>Cisco CallManager Express (CME)</b> service running on the <code>HQ-Router</code>. This centralizes control, numbering plans, and phone configurations.</div>
+                </li>
+                <li>
+                    <svg class="protocol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    <div><strong>Branch Role - Voice Gateways:</strong> Routers at <code>BR1</code> and <code>BR2</code> act as gateways. They use <b>dial-peers</b> to route all call traffic to the central CME at HQ for processing, rather than handling calls locally.</div>
+                </li>
+                 <li>
+                    <svg class="protocol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                    <div><strong>Automated Phone Provisioning:</strong> Phones automatically receive their configuration. Local DHCP servers provide <code>option 150</code>, which points them to the TFTP server on <code>HQ-Router</code> (<code>192.168.255.1</code>) to download their settings.</div>
+                </li>
+            </ul>
+            <div class="grid-layout">
+                <div class="grid-card">
+                    <h3>Numbering Plan</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Number Range</th><th>Assigned Site</th><th>Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>1xxx</code></td><td>Headquarters (HQ)</td><td>HQ Staff Phones</td></tr>
+                            <tr><td><code>2xxx</code></td><td>Branch 1 (BR1)</td><td>Branch 1 Staff Phones</td></tr>
+                            <tr><td><code>3xxx</code></td><td>Branch 2 (BR2)</td><td>Branch 2 Staff Phones</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="grid-card">
+                    <h3>Registered Phones (ephones)</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>MAC Address</th><th>Assigned Number</th><th>Site</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>00D0.BA21.6903</code></td><td>1001</td><td>HQ</td></tr>
+                            <tr><td><code>00E0.A385.973C</code></td><td>1002</td><td>HQ</td></tr>
+                            <tr><td><code>0090.2B3D.E76A</code></td><td>2001</td><td>Branch 1</td></tr>
+                            <tr><td><code>0060.5C84.57C2</code></td><td>2002</td><td>Branch 1</td></tr>
+                            <tr><td><code>00D0.FF21.D0CB</code></td><td>3001</td><td>Branch 2</td></tr>
+                            <tr><td><code>0001.6329.7EE2</code></td><td>3002</td><td>Branch 2</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div id="tab-hardware" class="tab-content">
+            <h2>Hardware Inventory</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Device Type</th>
+                        <th>Model</th>
+                        <th>Quantity</th>
+                        <th>Role / Key Functions</th>
+                        <th>Location(s)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Router</td>
+                        <td><code>Cisco 2811 ISR</code></td>
+                        <td>3</td>
+                        <td>WAN Gateway, Inter-VLAN Routing, DHCP, QoS, Security (ACLs). HQ-Router also serves as the central CME.</td>
+                        <td>HQ, BR1, BR2</td>
+                    </tr>
+                    <tr>
+                        <td>Layer 3 Switch</td>
+                        <td><code>Cisco Catalyst 3650-24PS</code></td>
+                        <td>3</td>
+                        <td>LAN Core / Distribution Switch, provides trunk connectivity to access layer switches, STP Root Bridge for the local site.</td>
+                        <td>HQ, BR1, BR2</td>
+                    </tr>
+                    <tr>
+                        <td>Layer 2 Switch</td>
+                        <td><code>Cisco Catalyst 2960-24TT</code></td>
+                        <td>6</td>
+                        <td>Access Layer connectivity for end devices, enforces Port Security, provides PoE for phones.</td>
+                        <td>HQ, BR1, BR2</td>
+                    </tr>
+                    <tr>
+                        <td>IP Phone</td>
+                        <td><code>Cisco 7960</code></td>
+                        <td>6</td>
+                        <td>Voice communication endpoint for users. Registers with the central CME server at HQ.</td>
+                        <td>HQ, BR1, BR2</td>
+                    </tr>
+                     <tr>
+                        <td>End Devices</td>
+                        <td><code>PC / Laptop</code></td>
+                        <td>16</td>
+                        <td>User workstations providing access to network resources.</td>
+                        <td>HQ, BR1, BR2</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="tab-plan" class="tab-content">
+             <h2>VLAN and IP Addressing Plan</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>VLAN ID</th><th>Name</th><th>Purpose</th><th>HQ Network</th><th>BR1 Network</th><th>BR2 Network</th><th>Default Gateway</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><b>10</b></td><td>Management</td><td>Device Management</td><td><code>10.0.10.0/24</code></td><td><code>10.1.10.0/24</code></td><td><code>10.2.10.0/24</code></td><td><code>10.x.10.1</code></td></tr>
+                    <tr><td><b>20</b></td><td>Sales</td><td>Sales Department</td><td><code>10.0.20.0/24</code></td><td><code>10.1.20.0/24</code></td><td><code>10.2.20.0/24</code></td><td><code>10.x.20.1</code></td></tr>
+                    <tr><td><b>30</b></td><td>Marketing</td><td>Marketing Department</td><td><code>10.0.30.0/24</code></td><td><code>10.1.30.0/24</code></td><td><code>10.2.30.0/24</code></td><td><code>10.x.30.1</code></td></tr>
+                    <tr><td><b>40</b></td><td>IT</td><td>IT Department</td><td><code>10.0.40.0/24</code></td><td><code>10.1.40.0/24</code></td><td><code>10.2.40.0/24</code></td><td><code>10.x.40.1</code></td></tr>
+                    <tr><td><b>50</b></td><td>Guest</td><td>Guest Network</td><td><code>10.0.50.0/24</code></td><td><code>10.1.50.0/24</code></td><td><code>10.2.50.0/24</code></td><td><code>10.x.50.1</code></td></tr>
+                    <tr><td><b>60</b></td><td>VoIP</td><td>IP Telephony</td><td><code>10.0.60.0/24</code></td><td><code>10.1.60.0/24</code></td><td><code>10.2.60.0/24</code></td><td><code>10.x.60.1</code></td></tr>
+                    <tr><td><b>999</b></td><td>NATIVE_VLAN</td><td>Untagged Trunk Traffic</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="tab-protocols" class="tab-content">
+            <h2>Key Protocols & Services</h2>
+            <ul class="protocols-list">
+                <li>
+                    <svg class="protocol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    <div><strong>Strict VLAN Segmentation:</strong> A robust security policy is enforced via ACLs. Traffic is strictly segmented: communication is <b>only permitted between the same VLAN across different sites</b>. All other traffic, including inter-VLAN, is denied.</div>
+                </li>
+                <li>
+                    <svg class="protocol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path><path d="M8.5 14.5L11 12l-2.5-2.5"></path><path d="M15.5 14.5L13 12l2.5-2.5"></path></svg>
+                    <div><strong>Dynamic Routing:</strong> <b>OSPF (Area 0)</b> provides robust and scalable routing between all sites, automatically adapting to network changes.</div>
+                </li>
+                <li>
+                    <svg class="protocol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                    <div><strong>Advanced QoS:</strong> A detailed QoS policy on WAN links guarantees 30% of bandwidth for <b>Voice</b>, 10% for <b>Call Signaling</b>, and the remaining 60% for <b>Data</b>, ensuring pristine call quality.</div>
+                </li>
+                <li>
+                    <svg class="protocol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+                    <div><strong>Distributed DHCP:</strong> Each router (HQ, BR1, BR2) provides <b>DHCP services</b> for its respective local VLANs, ensuring high availability and keeping address allocation traffic local.</div>
+                </li>
+                <li>
+                    <svg class="protocol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7"></path><path d="M18 8h.01"></path><path d="m2 13 2.16-2.16a2.78 2.78 0 0 1 3.92 0L12 14l.84-.84a2.78 2.78 0 0 1 3.92 0L22 18"></path><path d="M2 18h20"></path></svg>
+                    <div><strong>Access Layer Security:</strong> All access ports are hardened with <b>Port Security</b> (restricting MAC addresses), <b>PortFast</b> (for fast convergence), and <b>BPDU Guard</b> (to prevent switching loops).</div>
+                </li>
+                <li>
+                    <svg class="protocol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <div><strong>Management Security:</strong> Remote device administration is secured using <b>SSHv2</b>. Access is restricted by an ACL, permitting connections only from the secure <b>Management VLAN</b> (10.x.10.0/24).</div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetTab = button.dataset.tab;
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    button.classList.add('active');
+                    document.getElementById(targetTab).classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
