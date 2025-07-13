@@ -1,0 +1,1748 @@
+
+Ниже приведены настройки с комментариями для каждого из файлов:
+
+! =================================================================
+! HQ-Router Configuration
+! =================================================================
+service password-encryption          ! Включить шифрование всех паролей в конфигурации
+!
+hostname HQ-Router                   ! Имя хоста маршрутизатора
+!
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Зашифрованный пароль для привилегированного режима
+!
+ip route 0.0.0.0 0.0.0.0 Null0       ! Статический маршрут по умолчанию, направляющий весь неопознанный трафик в Null0 (отбрасывание)
+!
+ip dhcp excluded-address 10.0.10.1 10.0.10.2  ! Исключить IP-адреса из пулов DHCP (например, для шлюзов или статических назначений)
+ip dhcp excluded-address 10.0.20.1
+ip dhcp excluded-address 10.0.30.1
+ip dhcp excluded-address 10.0.40.1
+ip dhcp excluded-address 10.0.50.1
+ip dhcp excluded-address 10.0.60.1 10.0.60.10
+ip dhcp excluded-address 10.0.10.3
+ip dhcp excluded-address 10.0.10.4
+!
+ip dhcp pool MANAGEMENT_VLAN         ! DHCP пул для VLAN управления
+ network 10.0.10.0 255.255.255.0     ! Сеть и маска
+ default-router 10.0.10.1          ! Шлюз по умолчанию для клиентов DHCP
+ option 150 ip 192.168.255.1       ! IP-адрес сервера TFTP (для IP-телефонов)
+ dns-server 8.8.8.8                ! DNS-сервер для клиентов DHCP
+ip dhcp pool SALES_VLAN              ! DHCP пул для VLAN продаж
+ network 10.0.20.0 255.255.255.0
+ default-router 10.0.20.1
+ option 150 ip 192.168.255.1
+ dns-server 8.8.8.8
+ip dhcp pool MARKETING_VLAN          ! DHCP пул для VLAN маркетинга
+ network 10.0.30.0 255.255.255.0
+ default-router 10.0.30.1
+ option 150 ip 192.168.255.1
+ dns-server 8.8.8.8
+ip dhcp pool IT_VLAN                 ! DHCP пул для VLAN ИТ
+ network 10.0.40.0 255.255.255.0
+ default-router 10.0.40.1
+ option 150 ip 192.168.255.1
+ dns-server 8.8.8.8
+ip dhcp pool GUEST_VLAN              ! DHCP пул для гостевого VLAN
+ network 10.0.50.0 255.255.255.0
+ default-router 10.0.50.1
+ dns-server 8.8.8.8
+ip dhcp pool VOIP_VLAN               ! DHCP пул для VLAN VoIP
+ network 10.0.60.0 255.255.255.0
+ default-router 10.0.60.1
+ option 150 ip 192.168.255.1
+ dns-server 8.8.8.8
+!
+ip cef                               ! Включить Cisco Express Forwarding (CEF) для быстрой коммутации пакетов
+no ipv6 cef                          ! Отключить IPv6 CEF
+!
+username admin privilege 15 secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Создание пользователя 'admin' с полными привилегиями (уровень 15) и зашифрованным паролем
+!
+no ip domain-lookup                  ! Отключить поиск доменных имен для предотвращения задержек при ошибочном вводе команд
+ip domain-name hq.local              ! Установить имя домена для устройства
+!
+class-map match-any VOICE            ! Класс-карта для голосового трафика (VoIP)
+ match ip dscp ef                  ! Сопоставить трафик с DSCP EF (Expedited Forwarding)
+ match ip precedence 5             ! Сопоставить трафик с IP-приоритетом 5
+class-map match-any CALL-SIGNALING   ! Класс-карта для трафика сигнализации вызовов
+ match ip dscp cs3                 ! Сопоставить трафик с DSCP CS3
+ match ip precedence 3             ! Сопоставить трафик с IP-приоритетом 3
+class-map match-any DATA             ! Класс-карта для трафика данных
+  match not ip dscp cs6              ! Сопоставить весь трафик, кроме DSCP CS6
+  match not ip precedence 6          ! Сопоставить весь трафик, кроме IP-приоритета 6
+!
+policy-map WAN-QoS-Policy            ! Политика QoS для WAN-соединения
+ class VOICE                       ! Для класса VOICE
+  priority percent 30                ! Выделить 30% пропускной способности с приоритетом
+ class CALL-SIGNALING              ! Для класса CALL-SIGNALING
+  bandwidth remaining percent 10     ! Выделить 10% оставшейся пропускной способности
+ class DATA                        ! Для класса DATA
+  bandwidth remaining percent 60     ! Выделить 60% оставшейся пропускной способности
+  random-detect                    ! Включить Random Early Detection (RED) для предотвращения перегрузок
+ class class-default               ! Для всего остального трафика
+  fair-queue                       ! Использовать справедливую очередь
+!
+access-list 10 permit 10.0.10.0 0.0.0.255  ! Стандартный ACL 10: разрешить сети 10.0.10.0/24
+access-list 10 permit 10.1.10.0 0.0.0.255  ! Разрешить сети 10.1.10.0/24
+access-list 10 permit 10.2.10.0 0.0.0.255  ! Разрешить сети 10.2.10.0/24
+!
+access-list 100 permit ip 10.0.10.0 0.0.0.255 any  ! Расширенный ACL 100: разрешить IP-трафик из 10.0.10.0/24 к любому назначению
+access-list 100 permit ip 10.0.20.0 0.0.0.255 any
+access-list 100 permit ip 10.0.30.0 0.0.0.255 any
+access-list 100 permit ip 10.0.40.0 0.0.0.255 any
+access-list 100 permit ip 10.0.50.0 0.0.0.255 any
+access-list 100 permit ip 10.0.60.0 0.0.0.255 any
+access-list 100 permit ip 10.1.10.0 0.0.0.255 any
+access-list 100 permit ip 10.1.20.0 0.0.0.255 any
+access-list 100 permit ip 10.1.30.0 0.0.0.255 any
+access-list 100 permit ip 10.1.40.0 0.0.0.255 any
+access-list 100 permit ip 10.1.50.0 0.0.0.255 any
+access-list 100 permit ip 10.1.60.0 0.0.0.255 any
+access-list 100 permit ip 10.2.10.0 0.0.0.255 any
+access-list 100 permit ip 10.2.20.0 0.0.0.255 any
+access-list 100 permit ip 10.2.30.0 0.0.0.255 any
+access-list 100 permit ip 10.2.40.0 0.0.0.255 any
+access-list 100 permit ip 10.2.50.0 0.0.0.255 any
+access-list 100 permit ip 10.2.60.0 0.0.0.255 any
+!
+access-list 110 permit udp any any range 1719 1720  ! Расширенный ACL 110: разрешить UDP-трафик в диапазоне портов 1719-1720 (H.323)
+access-list 110 permit udp any any eq 5060           ! Разрешить UDP-трафик на порт 5060 (SIP)
+access-list 110 permit tcp any any eq 5060           ! Разрешить TCP-трафик на порт 5060 (SIP)
+access-list 110 permit tcp any any range 2000 2020    ! Разрешить TCP-трафик в диапазоне портов 2000-2020
+!
+access-list 120 permit tcp any any eq 2000          ! Расширенный ACL 120: разрешить TCP-трафик на порт 2000
+!
+!
+route-map VOIP_POLICY_IN permit 10                 ! Route-map VOIP_POLICY_IN, последовательность 10
+ match ip address 110                            ! Сопоставить трафик с ACL 110
+ set ip precedence 5                             ! Установить IP-приоритет 5
+ set ip dscp ef                                  ! Установить DSCP EF
+!
+!
+interface FastEthernet0/0.10                       ! Субинтерфейс FastEthernet0/0.10 для VLAN 10 (Management)
+ encapsulation dot1Q 10                           ! Инкапсуляция Dot1Q для VLAN 10
+ ip address 10.0.10.1 255.255.255.0               ! IP-адрес субинтерфейса
+ ip access-group MANAGEMENT_POLICY_IN in          ! Применить ACL MANAGEMENT_POLICY_IN для входящего трафика
+ no shutdown                                      ! Включить субинтерфейс
+!
+interface FastEthernet0/0.20                       ! Субинтерфейс FastEthernet0/0.20 для VLAN 20 (Sales)
+ encapsulation dot1Q 20
+ ip address 10.0.20.1 255.255.255.0
+ no shutdown
+!
+interface FastEthernet0/0.30                       ! Субинтерфейс FastEthernet0/0.30 для VLAN 30 (Marketing)
+ encapsulation dot1Q 30
+ ip address 10.0.30.1 255.255.255.0
+ no shutdown
+!
+interface FastEthernet0/0.40                       ! Субинтерфейс FastEthernet0/0.40 для VLAN 40 (IT)
+ encapsulation dot1Q 40
+ ip address 10.0.40.1 255.255.255.0
+ no shutdown
+!
+interface FastEthernet0/0.50                       ! Субинтерфейс FastEthernet0/0.50 для VLAN 50 (Guest)
+ encapsulation dot1Q 50
+ ip address 10.0.50.1 255.255.255.0
+ no shutdown
+!
+interface FastEthernet0/0.60                       ! Субинтерфейс FastEthernet0/0.60 для VLAN 60 (VoIP)
+ encapsulation dot1Q 60
+ ip address 10.0.60.1 255.255.255.0
+ ip policy route-map VOIP_POLICY_IN in            ! Применить политику маршрутизации VOIP_POLICY_IN для входящего трафика
+ no shutdown
+!
+interface Serial1/0                                ! Последовательный интерфейс Serial1/0
+ no ip address                                    ! Без IP-адреса на основном интерфейсе
+ encapsulation frame-relay                        ! Инкапсуляция Frame Relay
+ frame-relay lmi-type cisco                       ! Тип LMI Cisco для Frame Relay
+ service-policy output WAN-QoS-Policy             ! Применить политику QoS WAN-QoS-Policy для исходящего трафика
+ no shutdown                                      ! Включить интерфейс
+!
+interface Serial1/0.102 point-to-point             ! Субинтерфейс Serial1/0.102 для соединения с BR1-Router (точка-точка)
+ description Connection to BR1-Router             ! Описание соединения
+ frame-relay interface-dlci 102                   ! DLCI Frame Relay
+ bandwidth 64                                     ! Пропускная способность 64 Кбит/с
+ ip address 10.255.0.1 255.255.255.252            ! IP-адрес субинтерфейса
+ no shutdown                                      ! Включить субинтерфейс
+!
+interface Serial1/0.103 point-to-point             ! Субинтерфейс Serial1/0.103 для соединения с BR2-Router (точка-точка)
+ description Connection to BR2-Router             ! Описание соединения
+ frame-relay interface-dlci 103                   ! DLCI Frame Relay
+ bandwidth 64                                     ! Пропускная способность 64 Кбит/с
+ ip address 10.255.0.5 255.255.255.252            ! IP-адрес субинтерфейса
+ no shutdown                                      ! Включить субинтерфейс
+!
+interface Serial1/1                                ! Последовательный интерфейс Serial1/1
+ shutdown                                         ! Отключить интерфейс
+interface Serial1/2                                ! Последовательный интерфейс Serial1/2
+ shutdown                                         ! Отключить интерфейс
+interface Serial1/3                                ! Последовательный интерфейс Serial1/3
+ shutdown                                         ! Отключить интерфейс
+!
+router ospf 1                                      ! Конфигурация протокола маршрутизации OSPF, процесс 1
+ router-id 192.168.255.1                          ! Идентификатор маршрутизатора OSPF
+ log-adjacency-changes                            ! Логировать изменения смежности
+ passive-interface default                        ! Все интерфейсы по умолчанию пассивны (не отправляют обновления OSPF)
+ no passive-interface Serial1/0.102               ! Сделать субинтерфейс Serial1/0.102 активным (отправлять обновления OSPF)
+ no passive-interface Serial1/0.103               ! Сделать субинтерфейс Serial1/0.103 активным (отправлять обновления OSPF)
+ network 10.0.10.0 0.0.0.255 area 0               ! Объявить сети в области OSPF 0
+ network 10.0.20.0 0.0.0.255 area 0
+ network 10.0.30.0 0.0.0.255 area 0
+ network 10.0.40.0 0.0.0.255 area 0
+ network 10.0.50.0 0.0.0.255 area 0
+ network 10.0.60.0 0.0.0.255 area 0
+ network 10.255.0.0 0.0.0.3 area 0
+ network 10.255.0.4 0.0.0.3 area 0
+ network 192.168.255.1 0.0.0.0 area 0
+ default-information originate                    ! Передавать маршрут по умолчанию в OSPF
+!
+telephony-service                                  ! Настройка сервиса IP-телефонии
+ max-ephones 20                                   ! Максимальное количество IP-телефонов
+ max-dn 40                                        ! Максимальное количество номеров телефонов
+ ip source-address 192.168.255.1 port 2000        ! Исходный IP-адрес и порт для IP-телефонии
+ auto assign 1 to 20                              ! Автоматически назначать номера телефонам
+ create cnf-files                                 ! Создавать файлы конфигурации для телефонов
+!
+ephone-dn 1                                        ! Настройка номера телефона 1
+ number 1001                                      ! Номер телефона
+ephone-dn 2                                        ! Настройка номера телефона 2
+ number 1002                                      ! Номер телефона
+ephone-dn 3                                        ! Настройка номера телефона 3
+ number 1003                                      ! Номер телефона
+ephone-dn 4                                        ! Настройка номера телефона 4
+ number 1004                                      ! Номер телефона
+ephone-dn 5                                        ! Настройка номера телефона 5
+ number 1005                                      ! Номер телефона
+ephone-dn 6                                        ! Настройка номера телефона 6
+ number 1006                                      ! Номер телефона
+!
+ephone 1                                           ! Настройка IP-телефона 1
+ mac-address 0001.6373.E2C7                         ! MAC-адрес телефона
+ type 7960                                        ! Тип телефона
+ button 1:1                                       ! Назначить кнопку 1 номеру 1
+!
+ephone 2                                           ! Настройка IP-телефона 2
+ mac-address 0001.6373.E2C8
+ type 7960
+ button 1:2
+!
+ephone 3                                           ! Настройка IP-телефона 3
+ mac-address 0001.6373.E2C9
+ type 7960
+ button 1:3
+!
+ephone 4                                           ! Настройка IP-телефона 4
+ mac-address 0001.6373.E2CA
+ type 7960
+ button 1:4
+!
+ephone 5                                           ! Настройка IP-телефона 5
+ mac-address 0001.6373.E2CB
+ type 7960
+ button 1:5
+!
+ephone 6                                           ! Настройка IP-телефона 6
+ mac-address 0001.6373.E2CC
+ type 7960
+ button 1:6
+!
+end
+
+
+
+! -----------------------------------------------------------------
+! HQ-L3-SW1 Switch Configuration
+! -----------------------------------------------------------------
+hostname HQ-L3-SW1
+!
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Зашифрованный пароль для привилегированного режима (enable secret)
+service password-encryption                    ! Включить шифрование всех паролей в конфигурации
+!
+username admin privilege 15 secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Создание пользователя 'admin' с полными привилегиями (уровень 15) и зашифрованным паролем
+!
+banner motd ^CUnauthorized access prohibited!^C  ! Установка баннера "сообщения дня" (Message Of The Day), отображаемого при входе.
+!
+no ip domain-lookup            ! Отключить поиск доменных имен для предотвращения задержек при ошибочном вводе команд
+ip domain-name hq.local        ! Установить имя домена для устройства
+!
+crypto key generate rsa general-keys modulus 2048  ! Сгенерировать RSA ключи для SSH с длиной модуля 2048 бит
+ip ssh version 2               ! Включить SSH версии 2
+!
+line console 0                 ! Настройка консольной линии
+ password 7 0822455D0A16      ! Зашифрованный пароль для доступа к консоли
+ logging synchronous            ! Включить синхронное логирование для предотвращения прерывания ввода команд сообщениями
+ login                          ! Требовать аутентификацию для доступа к консоли
+!
+line vty 0 4                   ! Настройка виртуальных терминальных линий (VTY) для удаленного доступа (SSH/Telnet)
+ access-class 10 in             ! Применить список контроля доступа (ACL) 10 для входящего трафика
+ transport input ssh            ! Разрешить только SSH подключения
+ login local                    ! Использовать локальную базу данных пользователей для аутентификации
+!
+no ip routing                  ! Отключить IP-маршрутизацию (так как это L3-коммутатор, маршрутизация будет включена через SVI)
+ip default-gateway 10.0.10.1   ! Установить шлюз по умолчанию для коммутатора
+!
+spanning-tree vlan 1-4094 root primary  ! Установить коммутатор в качестве первичного корневого моста для всех VLAN
+!
+mls qos                        ! Включить QoS (Качество обслуживания) на уровне MLS (Multi-Layer Switching)
+!
+vlan 10                        ! Создать VLAN 10
+ name Management                ! Присвоить VLAN 10 имя "Management"
+vlan 20                        ! Создать VLAN 20
+ name Sales                     ! Присвоить VLAN 20 имя "Sales"
+vlan 30                        ! Создать VLAN 30
+ name Marketing                 ! Присвоить VLAN 30 имя "Marketing"
+vlan 40                        ! Создать VLAN 40
+ name IT                        ! Присвоить VLAN 40 имя "IT"
+vlan 50                        ! Создать VLAN 50
+ name Guest                     ! Присвоить VLAN 50 имя "Guest"
+vlan 60                        ! Создать VLAN 60
+ name VoIP                      ! Присвоить VLAN 60 имя "VoIP"
+vlan 999                       ! Создать VLAN 999
+ name NATIVE_VLAN               ! Присвоить VLAN 999 имя "NATIVE_VLAN" (используется как Native VLAN для транков)
+!
+access-list 10 permit 10.0.10.0 0.0.0.255  ! Разрешить трафик из сети 10.0.10.0/24 в ACL 10
+access-list 10 permit 10.1.10.0 0.0.0.255  ! Разрешить трафик из сети 10.1.10.0/24 в ACL 10
+access-list 10 permit 10.2.10.0 0.0.0.255  ! Разрешить трафик из сети 10.2.10.0/24 в ACL 10
+!
+interface Vlan10               ! Настройка интерфейса VLAN 10 (SVI - Switched Virtual Interface)
+ ip address 10.0.10.2 255.255.255.0  ! Установить IP-адрес для интерфейса VLAN 10
+ no shutdown                    ! Включить интерфейс
+!
+interface GigabitEthernet1/0/1     ! Настройка интерфейса GigabitEthernet1/0/1
+ description Connected to HQ-Router Fa0/0  ! Описание интерфейса
+ switchport trunk encapsulation dot1q     ! Установить инкапсуляцию транка Dot1q
+ switchport mode trunk                    ! Установить режим порта как транковый
+ switchport trunk native vlan 999         ! Установить Native VLAN для транка в 999
+ switchport trunk allowed vlan 10,20,30,40,50,60 ! Разрешить передачу указанных VLAN через транк
+ mls qos trust dscp                       ! Доверять значениям DSCP для QoS на этом порту
+ no shutdown                              ! Включить интерфейс
+!
+interface GigabitEthernet1/0/2     ! Настройка интерфейса GigabitEthernet1/0/2
+ description Connected to HQ-L2-SW1 Gi0/1  ! Описание интерфейса
+ switchport trunk encapsulation dot1q     ! Установить инкапсуляцию транка Dot1q
+ switchport mode trunk                    ! Установить режим порта как транковый
+ switchport trunk native vlan 999         ! Установить Native VLAN для транка в 999
+ switchport trunk allowed vlan 10,20,30,40,50,60 ! Разрешить передачу указанных VLAN через транк
+ mls qos trust dscp                       ! Доверять значениям DSCP для QoS на этом порту
+ no shutdown                              ! Включить интерфейс
+!
+interface GigabitEthernet1/0/3     ! Настройка интерфейса GigabitEthernet1/0/3
+ description Connected to HQ-L2-SW2 Gi0/1  ! Описание интерфейса
+ switchport trunk encapsulation dot1q     ! Установить инкапсуляцию транка Dot1q
+ switchport mode trunk                    ! Установить режим порта как транковый
+ switchport trunk native vlan 999         ! Установить Native VLAN для транка в 999
+ switchport trunk allowed vlan 10,20,30,40,50,60 ! Разрешить передачу указанных VLAN через транк
+ mls qos trust dscp                       ! Доверять значениям DSCP для QoS на этом порту
+ no shutdown                              ! Включить интерфейс
+!
+interface range GigabitEthernet1/0/4-24  ! Настройка диапазона интерфейсов GigabitEthernet1/0/4-24
+ shutdown                               ! Отключить эти интерфейсы
+!
+end
+
+
+
+! -----------------------------------------------------------------
+! HQ-L2-SW1 Switch Configuration
+! -----------------------------------------------------------------
+hostname HQ-L2-SW1
+!
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Зашифрованный пароль для привилегированного режима (enable secret)
+service password-encryption                    ! Включить шифрование всех паролей в конфигурации
+!
+username admin privilege 15 secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Создание пользователя 'admin' с полными привилегиями (уровень 15) и зашифрованным паролем
+!
+banner motd ^CUnauthorized access prohibited!^C  ! Установка баннера "сообщения дня" (Message Of The Day), отображаемого при входе.
+!
+no ip domain-lookup            ! Отключить поиск доменных имен для предотвращения задержек при ошибочном вводе команд
+ip domain-name hq.local        ! Установить имя домена для устройства
+!
+crypto key generate rsa general-keys modulus 2048  ! Сгенерировать RSA ключи для SSH с длиной модуля 2048 бит
+ip ssh version 2               ! Включить SSH версии 2
+!
+line console 0                 ! Настройка консольной линии
+ password 7 0822455D0A16      ! Зашифрованный пароль для доступа к консоли
+ logging synchronous            ! Включить синхронное логирование для предотвращения прерывания ввода команд сообщениями
+ login                          ! Требовать аутентификацию для доступа к консоли
+!
+line vty 0 4                   ! Настройка виртуальных терминальных линий (VTY) для удаленного доступа (SSH/Telnet)
+ access-class 10 in             ! Применить список контроля доступа (ACL) 10 для входящего трафика
+ transport input ssh            ! Разрешить только SSH подключения
+ login local                    ! Использовать локальную базу данных пользователей для аутентификации
+!
+mls qos                        ! Включить QoS (Качество обслуживания) на уровне MLS (Multi-Layer Switching)
+!
+vlan 10                        ! Создать VLAN 10
+ name Management                ! Присвоить VLAN 10 имя "Management"
+vlan 20                        ! Создать VLAN 20
+ name Sales                     ! Присвоить VLAN 20 имя "Sales"
+vlan 30                        ! Создать VLAN 30
+ name Marketing                 ! Присвоить VLAN 30 имя "Marketing"
+vlan 40                        ! Создать VLAN 40
+ name IT                        ! Присвоить VLAN 40 имя "IT"
+vlan 50                        ! Создать VLAN 50
+ name Guest                     ! Присвоить VLAN 50 имя "Guest"
+vlan 60                        ! Создать VLAN 60
+ name VoIP                      ! Присвоить VLAN 60 имя "VoIP"
+vlan 999                       ! Создать VLAN 999
+ name NATIVE_VLAN               ! Присвоить VLAN 999 имя "NATIVE_VLAN" (используется как Native VLAN для транков)
+!
+access-list 10 permit 10.0.10.0 0.0.0.255  ! Разрешить трафик из сети 10.0.10.0/24 в ACL 10
+access-list 10 permit 10.1.10.0 0.0.0.255  ! Разрешить трафик из сети 10.1.10.0/24 в ACL 10
+access-list 10 permit 10.2.10.0 0.0.0.255  ! Разрешить трафик из сети 10.2.10.0/24 в ACL 10
+!
+spanning-tree portfast default           ! Включить Portfast по умолчанию на всех портах доступа
+spanning-tree portfast bpduguard default ! Включить BPDU Guard по умолчанию на всех портах с Portfast для предотвращения петель
+!
+interface Vlan10               ! Настройка интерфейса VLAN 10 (SVI - Switched Virtual Interface)
+ ip address 10.0.10.5 255.255.255.0  ! Установить IP-адрес для интерфейса VLAN 10
+ no shutdown                    ! Включить интерфейс
+!
+ip default-gateway 10.0.10.1   ! Установить шлюз по умолчанию для коммутатора
+!
+interface GigabitEthernet0/1       ! Настройка интерфейса GigabitEthernet0/1
+ description Connected to HQ-L3-SW1 Gi1/0/2  ! Описание интерфейса
+ switchport trunk encapsulation dot1q       ! Установить инкапсуляцию транка Dot1q
+ switchport mode trunk                      ! Установить режим порта как транковый
+ switchport trunk native vlan 999           ! Установить Native VLAN для транка в 999
+ switchport trunk allowed vlan 10,20,30,40,50,60 ! Разрешить передачу указанных VLAN через транк
+ mls qos trust dscp                         ! Доверять значениям DSCP для QoS на этом порту
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/1          ! Настройка интерфейса FastEthernet0/1
+ description Connected to Management PC  ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ (access)
+ switchport access vlan 10                  ! Назначить порт VLAN 10
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 1         ! Разрешить только 1 MAC-адрес на порту
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/2          ! Настройка интерфейса FastEthernet0/2
+ description Connected to Sales PC      ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 20                  ! Назначить порт VLAN 20
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 1         ! Разрешить только 1 MAC-адрес на порту
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/3          ! Настройка интерфейса FastEthernet0/3
+ description Connected to Marketing PC  ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 30                  ! Назначить порт VLAN 30
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 1         ! Разрешить только 1 MAC-адрес на порту
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/20         ! Настройка интерфейса FastEthernet0/20
+ description Connected to VoIP Phone  ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 40                  ! Назначить порт VLAN 40 (для данных)
+ switchport voice vlan 60                   ! Назначить голосовой VLAN 60
+ auto qos voip trust                        ! Включить автоматический QoS для VoIP, доверяя меткам QoS
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 2         ! Разрешить до 2 MAC-адресов на порту (для телефона и ПК за ним)
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface range FastEthernet0/4-19, FastEthernet0/21-24  ! Настройка диапазона интерфейсов FastEthernet0/4-19 и FastEthernet0/21-24
+ shutdown                                   ! Отключить эти интерфейсы
+!
+end
+
+
+
+! -----------------------------------------------------------------
+! HQ-L2-SW2 Switch Configuration
+! -----------------------------------------------------------------
+hostname HQ-L2-SW2
+!
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Зашифрованный пароль для привилегированного режима (enable secret)
+service password-encryption                    ! Включить шифрование всех паролей в конфигурации
+!
+username admin privilege 15 secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Создание пользователя 'admin' с полными привилегиями (уровень 15) и зашифрованным паролем
+!
+banner motd ^CUnauthorized access prohibited!^C  ! Установка баннера "сообщения дня" (Message Of The Day), отображаемого при входе.
+!
+no ip domain-lookup            ! Отключить поиск доменных имен для предотвращения задержек при ошибочном вводе команд
+ip domain-name hq.local        ! Установить имя домена для устройства
+!
+crypto key generate rsa general-keys modulus 2048  ! Сгенерировать RSA ключи для SSH с длиной модуля 2048 бит
+ip ssh version 2               ! Включить SSH версии 2
+!
+line console 0                 ! Настройка консольной линии
+ password 7 0822455D0A16      ! Зашифрованный пароль для доступа к консоли
+ logging synchronous            ! Включить синхронное логирование для предотвращения прерывания ввода команд сообщениями
+ login                          ! Требовать аутентификацию для доступа к консоли
+!
+line vty 0 4                   ! Настройка виртуальных терминальных линий (VTY) для удаленного доступа (SSH/Telnet)
+ access-class 10 in             ! Применить список контроля доступа (ACL) 10 для входящего трафика
+ transport input ssh            ! Разрешить только SSH подключения
+ login local                    ! Использовать локальную базу данных пользователей для аутентификации
+!
+mls qos                        ! Включить QoS (Качество обслуживания) на уровне MLS (Multi-Layer Switching)
+!
+vlan 10                        ! Создать VLAN 10
+ name Management                ! Присвоить VLAN 10 имя "Management"
+vlan 20                        ! Создать VLAN 20
+ name Sales                     ! Присвоить VLAN 20 имя "Sales"
+vlan 30                        ! Создать VLAN 30
+ name Marketing                 ! Присвоить VLAN 30 имя "Marketing"
+vlan 40                        ! Создать VLAN 40
+ name IT                        ! Присвоить VLAN 40 имя "IT"
+vlan 50                        ! Создать VLAN 50
+ name Guest                     ! Присвоить VLAN 50 имя "Guest"
+vlan 60                        ! Создать VLAN 60
+ name VoIP                      ! Присвоить VLAN 60 имя "VoIP"
+vlan 999                       ! Создать VLAN 999
+ name NATIVE_VLAN               ! Присвоить VLAN 999 имя "NATIVE_VLAN" (используется как Native VLAN для транков)
+!
+access-list 10 permit 10.0.10.0 0.0.0.255  ! Разрешить трафик из сети 10.0.10.0/24 в ACL 10
+access-list 10 permit 10.1.10.0 0.0.0.255  ! Разрешить трафик из сети 10.1.10.0/24 в ACL 10
+access-list 10 permit 10.2.10.0 0.0.0.255  ! Разрешить трафик из сети 10.2.10.0/24 в ACL 10
+!
+spanning-tree portfast default           ! Включить Portfast по умолчанию на всех портах доступа
+spanning-tree portfast bpduguard default ! Включить BPDU Guard по умолчанию на всех портах с Portfast для предотвращения петель
+!
+interface Vlan10               ! Настройка интерфейса VLAN 10 (SVI - Switched Virtual Interface)
+ ip address 10.0.10.6 255.255.255.0  ! Установить IP-адрес для интерфейса VLAN 10
+ no shutdown                    ! Включить интерфейс
+!
+ip default-gateway 10.0.10.1   ! Установить шлюз по умолчанию для коммутатора
+!
+interface GigabitEthernet0/1       ! Настройка интерфейса GigabitEthernet0/1
+ description Connected to HQ-L3-SW1 Gi1/0/3  ! Описание интерфейса
+ switchport trunk encapsulation dot1q       ! Установить инкапсуляцию транка Dot1q
+ switchport mode trunk                      ! Установить режим порта как транковый
+ switchport trunk native vlan 999           ! Установить Native VLAN для транка в 999
+ switchport trunk allowed vlan 10,20,30,40,50,60 ! Разрешить передачу указанных VLAN через транк
+ mls qos trust dscp                         ! Доверять значениям DSCP для QoS на этом порту
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/3          ! Настройка интерфейса FastEthernet0/3
+ description Connected to Sales PC      ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ (access)
+ switchport access vlan 20                  ! Назначить порт VLAN 20
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 1         ! Разрешить только 1 MAC-адрес на порту
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/1          ! Настройка интерфейса FastEthernet0/1
+ description Connected to IT PC         ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 40                  ! Назначить порт VLAN 40
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 1         ! Разрешить только 1 MAC-адрес на порту
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/2          ! Настройка интерфейса FastEthernet0/2
+ description Connected to Guest PC      ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 50                  ! Назначить порт VLAN 50
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 1         ! Разрешить только 1 MAC-адрес на порту
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/20         ! Настройка интерфейса FastEthernet0/20
+ description Connected to VoIP Phone  ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 40                  ! Назначить порт VLAN 40 (для данных)
+ switchport voice vlan 60                   ! Назначить голосовой VLAN 60
+ auto qos voip trust                        ! Включить автоматический QoS для VoIP, доверяя меткам QoS
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 2         ! Разрешить до 2 MAC-адресов на порту (для телефона и ПК за ним)
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface range FastEthernet0/4-19, FastEthernet0/21-24  ! Настройка диапазона интерфейсов FastEthernet0/4-19 и FastEthernet0/21-24
+ shutdown                                   ! Отключить эти интерфейсы
+!
+end
+
+
+
+! =================================================================
+! BR1-Router Configuration
+! =================================================================
+service password-encryption          ! Включить шифрование всех паролей в конфигурации
+!
+hostname BR1-Router                  ! Имя хоста маршрутизатора
+!
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Зашифрованный пароль для привилегированного режима
+!
+ip dhcp excluded-address 10.1.10.1   ! Исключить IP-адреса из пулов DHCP (например, для шлюзов или статических назначений)
+ip dhcp excluded-address 10.1.20.1
+ip dhcp excluded-address 10.1.30.1
+ip dhcp excluded-address 10.1.40.1
+ip dhcp excluded-address 10.1.50.1
+ip dhcp excluded-address 10.1.60.1
+ip dhcp excluded-address 10.1.10.5
+ip dhcp excluded-address 10.1.10.7
+ip dhcp excluded-address 10.1.10.9
+!
+ip dhcp pool MANAGEMENT_VLAN         ! DHCP пул для VLAN управления
+ network 10.1.10.0 255.255.255.0     ! Сеть и маска
+ default-router 10.1.10.1          ! Шлюз по умолчанию для клиентов DHCP
+ option 150 ip 192.168.255.1       ! IP-адрес сервера TFTP (для IP-телефонов)
+ dns-server 8.8.8.8                ! DNS-сервер для клиентов DHCP
+ip dhcp pool SALES_VLAN              ! DHCP пул для VLAN продаж
+ network 10.1.20.0 255.255.255.0
+ default-router 10.1.20.1
+ option 150 ip 192.168.255.1
+ dns-server 8.8.8.8
+ip dhcp pool MARKETING_VLAN          ! DHCP пул для VLAN маркетинга
+ network 10.1.30.0 255.255.255.0
+ default-router 10.1.30.1
+ option 150 ip 192.168.255.1
+ dns-server 8.8.8.8
+ip dhcp pool IT_VLAN                 ! DHCP пул для VLAN ИТ
+ network 10.1.40.0 255.255.255.0
+ default-router 10.1.40.1
+ option 150 ip 192.168.255.1
+ dns-server 8.8.8.8
+ip dhcp pool GUEST_VLAN              ! DHCP пул для гостевого VLAN
+ network 10.1.50.0 255.255.255.0
+ default-router 10.1.50.1
+ dns-server 8.8.8.8
+ip dhcp pool VOIP_VLAN               ! DHCP пул для VLAN VoIP
+ network 10.1.60.0 255.255.255.0
+ default-router 10.1.60.1
+ option 150 ip 192.168.255.1
+ dns-server 8.8.8.8
+!
+ip cef                               ! Включить Cisco Express Forwarding (CEF) для быстрой коммутации пакетов
+no ipv6 cef                          ! Отключить IPv6 CEF
+!
+username admin privilege 15 secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Создание пользователя 'admin' с полными привилегиями (уровень 15) и зашифрованным паролем
+!
+no ip domain-lookup                  ! Отключить поиск доменных имен для предотвращения задержек при ошибочном вводе команд
+ip domain-name br1.local             ! Установить имя домена для устройства
+!
+class-map match-any VOICE            ! Класс-карта для голосового трафика (VoIP)
+ match ip dscp ef                  ! Сопоставить трафик с DSCP EF (Expedited Forwarding)
+ match ip precedence 5             ! Сопоставить трафик с IP-приоритетом 5
+class-map match-any CALL-SIGNALING   ! Класс-карта для трафика сигнализации вызовов
+ match ip dscp cs3                 ! Сопоставить трафик с DSCP CS3
+ match ip precedence 3             ! Сопоставить трафик с IP-приоритетом 3
+class-map match-any DATA             ! Класс-карта для трафика данных
+ match not ip dscp cs6              ! Сопоставить весь трафик, кроме DSCP CS6
+ match not ip precedence 6          ! Сопоставить весь трафик, кроме IP-приоритета 6
+!
+policy-map WAN-QoS-Policy            ! Политика QoS для WAN-соединения
+ class VOICE                       ! Для класса VOICE
+  priority percent 30                ! Выделить 30% пропускной способности с приоритетом
+ class CALL-SIGNALING              ! Для класса CALL-SIGNALING
+  bandwidth remaining percent 10     ! Выделить 10% оставшейся пропускной способности
+ class DATA                        ! Для класса DATA
+  bandwidth remaining percent 60     ! Выделить 60% оставшейся пропускной способности
+  random-detect                    ! Включить Random Early Detection (RED) для предотвращения перегрузок
+ class class-default               ! Для всего остального трафика
+  fair-queue                       ! Использовать справедливую очередь
+!
+access-list 10 permit 10.0.10.0 0.0.0.255  ! Стандартный ACL 10: разрешить сети 10.0.10.0/24
+access-list 10 permit 10.1.10.0 0.0.0.255  ! Разрешить сети 10.1.10.0/24
+access-list 10 permit 10.2.10.0 0.0.0.255  ! Разрешить сети 10.2.10.0/24
+!
+access-list 100 permit ip 10.0.10.0 0.0.0.255 any  ! Расширенный ACL 100: разрешить IP-трафик из 10.0.10.0/24 к любому назначению
+access-list 100 permit ip 10.0.20.0 0.0.0.255 any
+access-list 100 permit ip 10.0.30.0 0.0.0.255 any
+access-list 100 permit ip 10.0.40.0 0.0.0.255 any
+access-list 100 permit ip 10.0.50.0 0.0.0.255 any
+access-list 100 permit ip 10.0.60.0 0.0.0.255 any
+access-list 100 permit ip 10.1.10.0 0.0.0.255 any
+access-list 100 permit ip 10.1.20.0 0.0.0.255 any
+access-list 100 permit ip 10.1.30.0 0.0.0.255 any
+access-list 100 permit ip 10.1.40.0 0.0.0.255 any
+access-list 100 permit ip 10.1.50.0 0.0.0.255 any
+access-list 100 permit ip 10.1.60.0 0.0.0.255 any
+access-list 100 permit ip 10.2.10.0 0.0.0.255 any
+access-list 100 permit ip 10.2.20.0 0.0.0.255 any
+access-list 100 permit ip 10.2.30.0 0.0.0.255 any
+access-list 100 permit ip 10.2.40.0 0.0.0.255 any
+access-list 100 permit ip 10.2.50.0 0.0.0.255 any
+access-list 100 permit ip 10.2.60.0 0.0.0.255 any
+!
+access-list 110 permit udp any any range 1719 1720  ! Расширенный ACL 110: разрешить UDP-трафик в диапазоне портов 1719-1720 (H.323)
+access-list 110 permit udp any any eq 5060           ! Разрешить UDP-трафик на порт 5060 (SIP)
+access-list 110 permit tcp any any eq 5060           ! Разрешить TCP-трафик на порт 5060 (SIP)
+access-list 110 permit tcp any any range 2000 2020    ! Разрешить TCP-трафик в диапазоне портов 2000-2020
+!
+route-map VOIP_POLICY_IN permit 10                 ! Route-map VOIP_POLICY_IN, последовательность 10
+ match ip address 110                            ! Сопоставить трафик с ACL 110
+ set ip precedence 5                             ! Установить IP-приоритет 5
+ set ip dscp ef                                  ! Установить DSCP EF
+!
+interface FastEthernet0/0.10                       ! Субинтерфейс FastEthernet0/0.10 для VLAN 10 (Management)
+ encapsulation dot1Q 10                           ! Инкапсуляция Dot1Q для VLAN 10
+ ip address 10.1.10.1 255.255.255.0               ! IP-адрес субинтерфейса
+ no shutdown                                      ! Включить субинтерфейс
+!
+interface FastEthernet0/0.20                       ! Субинтерфейс FastEthernet0/0.20 для VLAN 20 (Sales)
+ encapsulation dot1Q 20
+ ip address 10.1.20.1 255.255.255.0
+ no shutdown
+!
+interface FastEthernet0/0.30                       ! Субинтерфейс FastEthernet0/0.30 для VLAN 30 (Marketing)
+ encapsulation dot1Q 30
+ ip address 10.1.30.1 255.255.255.0
+ no shutdown
+!
+interface FastEthernet0/0.40                       ! Субинтерфейс FastEthernet0/0.40 для VLAN 40 (IT)
+ encapsulation dot1Q 40
+ ip address 10.1.40.1 255.255.255.0
+ no shutdown
+!
+interface FastEthernet0/0.50                       ! Субинтерфейс FastEthernet0/0.50 для VLAN 50 (Guest)
+ encapsulation dot1Q 50
+ ip address 10.1.50.1 255.255.255.0
+ no shutdown
+!
+interface FastEthernet0/0.60                       ! Субинтерфейс FastEthernet0/0.60 для VLAN 60 (VoIP)
+ encapsulation dot1Q 60
+ ip address 10.1.60.1 255.255.255.0
+ ip policy route-map VOIP_POLICY_IN in            ! Применить политику маршрутизации VOIP_POLICY_IN для входящего трафика
+ no shutdown
+!
+interface FastEthernet0/1                          ! Интерфейс FastEthernet0/1
+ shutdown                                         ! Отключить интерфейс
+!
+interface Serial1/0                                ! Последовательный интерфейс Serial1/0
+ no ip address                                    ! Без IP-адреса на основном интерфейсе
+ encapsulation frame-relay                        ! Инкапсуляция Frame Relay
+ frame-relay lmi-type cisco                       ! Тип LMI Cisco для Frame Relay
+ service-policy output WAN-QoS-Policy             ! Применить политику QoS WAN-QoS-Policy для исходящего трафика
+ no shutdown                                      ! Включить интерфейс
+!
+interface Serial1/0.201 point-to-point             ! Субинтерфейс Serial1/0.201 для соединения с HQ-Router (точка-точка)
+ description Connection to HQ-Router              ! Описание соединения
+ frame-relay interface-dlci 201                   ! DLCI Frame Relay
+ bandwidth 64                                     ! Пропускная способность 64 Кбит/с
+ ip address 10.255.0.2 255.255.255.252            ! IP-адрес субинтерфейса
+ no shutdown                                      ! Включить субинтерфейс
+!
+interface Serial1/0.203 point-to-point             ! Субинтерфейс Serial1/0.203 для соединения с BR2-Router (точка-точка)
+ description Connection to BR2-Router             ! Описание соединения
+ frame-relay interface-dlci 203                   ! DLCI Frame Relay
+ bandwidth 64                                     ! Пропускная способность 64 Кбит/с
+ ip address 10.255.0.9 255.255.255.252            ! IP-адрес субинтерфейса
+ no shutdown                                      ! Включить субинтерфейс
+!
+interface Serial1/1                                ! Последовательный интерфейс Serial1/1
+ shutdown                                         ! Отключить интерфейс
+interface Serial1/2                                ! Последовательный интерфейс Serial1/2
+ shutdown                                         ! Отключить интерфейс
+interface Serial1/3                                ! Последовательный интерфейс Serial1/3
+ shutdown                                         ! Отключить интерфейс
+!
+router ospf 1                                      ! Конфигурация протокола маршрутизации OSPF, процесс 1
+ router-id 192.168.255.2                          ! Идентификатор маршрутизатора OSPF
+ log-adjacency-changes                            ! Логировать изменения смежности
+ passive-interface default                        ! Все интерфейсы по умолчанию пассивны (не отправляют обновления OSPF)
+ no passive-interface Serial1/0.201               ! Сделать субинтерфейс Serial1/0.201 активным (отправлять обновления OSPF)
+ no passive-interface Serial1/0.203               ! Сделать субинтерфейс Serial1/0.203 активным (отправлять обновления OSPF)
+ network 10.1.10.0 0.0.0.255 area 0               ! Объявить сети в области OSPF 0
+ network 10.1.20.0 0.0.0.255 area 0
+ network 10.1.30.0 0.0.0.255 area 0
+ network 10.1.40.0 0.0.0.255 area 0
+ network 10.1.50.0 0.0.0.255 area 0
+ network 10.1.60.0 0.0.0.255 area 0
+ network 10.255.0.0 0.0.0.3 area 0
+ network 10.255.0.8 0.0.0.3 area 0
+ network 192.168.255.2 0.0.0.0 area 0
+ default-information originate                    ! Передавать маршрут по умолчанию в OSPF
+!
+telephony-service                                  ! Настройка сервиса IP-телефонии
+ max-ephones 20                                   ! Максимальное количество IP-телефонов
+ max-dn 40                                        ! Максимальное количество номеров телефонов
+ ip source-address 192.168.255.1 port 2000        ! Исходный IP-адрес и порт для IP-телефонии
+ auto assign 1 to 20                              ! Автоматически назначать номера телефонам
+ create cnf-files                                 ! Создавать файлы конфигурации для телефонов
+!
+ephone-dn 7                                        ! Настройка номера телефона 7
+ number 2001                                      ! Номер телефона
+ephone-dn 8                                        ! Настройка номера телефона 8
+ number 2002                                      ! Номер телефона
+ephone-dn 9                                        ! Настройка номера телефона 9
+ number 2003                                      ! Номер телефона
+ephone-dn 10                                       ! Настройка номера телефона 10
+ number 2004                                      ! Номер телефона
+ephone-dn 11                                       ! Настройка номера телефона 11
+ number 2005                                      ! Номер телефона
+ephone-dn 12                                       ! Настройка номера телефона 12
+ number 2006                                      ! Номер телефона
+!
+ephone 7                                           ! Настройка IP-телефона 7
+ mac-address 0001.6373.E2CD                         ! MAC-адрес телефона
+ type 7960                                        ! Тип телефона
+ button 1:7                                       ! Назначить кнопку 1 номеру 7
+!
+ephone 8                                           ! Настройка IP-телефона 8
+ mac-address 0001.6373.E2CE
+ type 7960
+ button 1:8
+!
+ephone 9                                           ! Настройка IP-телефона 9
+ mac-address 0001.6373.E2CF
+ type 7960
+ button 1:9
+!
+ephone 10                                          ! Настройка IP-телефона 10
+ mac-address 0001.6373.E2D0
+ type 7960
+ button 1:10
+!
+ephone 11                                          ! Настройка IP-телефона 11
+ mac-address 0001.6373.E2D1
+ type 7960
+ button 1:11
+!
+ephone 12                                          ! Настройка IP-телефона 12
+ mac-address 0001.6373.E2D2
+ type 7960
+ button 1:12
+!
+end
+
+
+
+! -----------------------------------------------------------------
+! BR1-L3-SW1 Switch Configuration
+! -----------------------------------------------------------------
+hostname BR1-L3-SW1
+!
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Зашифрованный пароль для привилегированного режима (enable secret)
+service password-encryption                    ! Включить шифрование всех паролей в конфигурации
+!
+username admin privilege 15 secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Создание пользователя 'admin' с полными привилегиями (уровень 15) и зашифрованным паролем
+!
+banner motd ^CUnauthorized access prohibited!^C  ! Установка баннера "сообщения дня" (Message Of The Day), отображаемого при входе.
+!
+no ip domain-lookup            ! Отключить поиск доменных имен для предотвращения задержек при ошибочном вводе команд
+ip domain-name br1.local       ! Установить имя домена для устройства
+!
+crypto key generate rsa general-keys modulus 2048  ! Сгенерировать RSA ключи для SSH с длиной модуля 2048 бит
+ip ssh version 2               ! Включить SSH версии 2
+!
+line console 0                 ! Настройка консольной линии
+ password 7 0822455D0A16      ! Зашифрованный пароль для доступа к консоли
+ logging synchronous            ! Включить синхронное логирование для предотвращения прерывания ввода команд сообщениями
+ login                          ! Требовать аутентификацию для доступа к консоли
+!
+line vty 0 4                   ! Настройка виртуальных терминальных линий (VTY) для удаленного доступа (SSH/Telnet)
+ access-class 10 in             ! Применить список контроля доступа (ACL) 10 для входящего трафика
+ transport input ssh            ! Разрешить только SSH подключения
+ login local                    ! Использовать локальную базу данных пользователей для аутентификации
+!
+no ip routing                  ! Отключить IP-маршрутизацию (так как это L3-коммутатор, маршрутизация будет включена через SVI)
+ip default-gateway 10.1.10.1   ! Установить шлюз по умолчанию для коммутатора
+!
+spanning-tree vlan 1-4094 root primary  ! Установить коммутатор в качестве первичного корневого моста для всех VLAN
+!
+mls qos                        ! Включить QoS (Качество обслуживания) на уровне MLS (Multi-Layer Switching)
+!
+vlan 10                        ! Создать VLAN 10
+ name Management                ! Присвоить VLAN 10 имя "Management"
+vlan 20                        ! Создать VLAN 20
+ name Sales                     ! Присвоить VLAN 20 имя "Sales"
+vlan 30                        ! Создать VLAN 30
+ name Marketing                 ! Присвоить VLAN 30 имя "Marketing"
+vlan 40                        ! Создать VLAN 40
+ name IT                        ! Присвоить VLAN 40 имя "IT"
+vlan 50                        ! Создать VLAN 50
+ name Guest                     ! Присвоить VLAN 50 имя "Guest"
+vlan 60                        ! Создать VLAN 60
+ name VoIP                      ! Присвоить VLAN 60 имя "VoIP"
+vlan 999                       ! Создать VLAN 999
+ name NATIVE_VLAN               ! Присвоить VLAN 999 имя "NATIVE_VLAN" (используется как Native VLAN для транков)
+!
+access-list 10 permit 10.0.10.0 0.0.0.255  ! Разрешить трафик из сети 10.0.10.0/24 в ACL 10
+access-list 10 permit 10.1.10.0 0.0.0.255  ! Разрешить трафик из сети 10.1.10.0/24 в ACL 10
+access-list 10 permit 10.2.10.0 0.0.0.255  ! Разрешить трафик из сети 10.2.10.0/24 в ACL 10
+!
+interface Vlan10               ! Настройка интерфейса VLAN 10 (SVI - Switched Virtual Interface)
+ ip address 10.1.10.5 255.255.255.0  ! Установить IP-адрес для интерфейса VLAN 10
+ no shutdown                    ! Включить интерфейс
+!
+interface GigabitEthernet1/0/1     ! Настройка интерфейса GigabitEthernet1/0/1
+ description Connected to BR1-Router Fa0/0  ! Описание интерфейса
+ switchport trunk encapsulation dot1q     ! Установить инкапсуляцию транка Dot1q
+ switchport mode trunk                    ! Установить режим порта как транковый
+ switchport trunk native vlan 999         ! Установить Native VLAN для транка в 999
+ switchport trunk allowed vlan 10,20,30,40,50,60 ! Разрешить передачу указанных VLAN через транк
+ mls qos trust dscp                       ! Доверять значениям DSCP для QoS на этом порту
+ no shutdown                              ! Включить интерфейс
+!
+interface GigabitEthernet1/0/2     ! Настройка интерфейса GigabitEthernet1/0/2
+ description Connected to BR1-L2-SW1 Gi0/1  ! Описание интерфейса
+ switchport trunk encapsulation dot1q     ! Установить инкапсуляцию транка Dot1q
+ switchport mode trunk                    ! Установить режим порта как транковый
+ switchport trunk native vlan 999         ! Установить Native VLAN для транка в 999
+ switchport trunk allowed vlan 10,20,30,40,50,60 ! Разрешить передачу указанных VLAN через транк
+ mls qos trust dscp                       ! Доверять значениям DSCP для QoS на этом порту
+ no shutdown                              ! Включить интерфейс
+!
+interface GigabitEthernet1/0/3     ! Настройка интерфейса GigabitEthernet1/0/3
+ description Connected to BR1-L2-SW2 Gi0/1  ! Описание интерфейса
+ switchport trunk encapsulation dot1q     ! Установить инкапсуляцию транка Dot1q
+ switchport mode trunk                    ! Установить режим порта как транковый
+ switchport trunk native vlan 999         ! Установить Native VLAN для транка в 999
+ switchport trunk allowed vlan 10,20,30,40,50,60 ! Разрешить передачу указанных VLAN через транк
+ mls qos trust dscp                       ! Доверять значениям DSCP для QoS на этом порту
+ no shutdown                              ! Включить интерфейс
+!
+interface range GigabitEthernet1/0/4-24  ! Настройка диапазона интерфейсов GigabitEthernet1/0/4-24
+ shutdown                               ! Отключить эти интерфейсы
+!
+end
+
+
+
+! -----------------------------------------------------------------
+! BR1-L2-SW1 Switch Configuration
+! -----------------------------------------------------------------
+hostname BR1-L2-SW1
+!
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Зашифрованный пароль для привилегированного режима (enable secret)
+service password-encryption                    ! Включить шифрование всех паролей в конфигурации
+!
+username admin privilege 15 secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Создание пользователя 'admin' с полными привилегиями (уровень 15) и зашифрованным паролем
+!
+banner motd ^CUnauthorized access prohibited!^C  ! Установка баннера "сообщения дня" (Message Of The Day), отображаемого при входе.
+!
+no ip domain-lookup            ! Отключить поиск доменных имен для предотвращения задержек при ошибочном вводе команд
+ip domain-name br1.local       ! Установить имя домена для устройства
+!
+crypto key generate rsa general-keys modulus 2048  ! Сгенерировать RSA ключи для SSH с длиной модуля 2048 бит
+ip ssh version 2               ! Включить SSH версии 2
+!
+line console 0                 ! Настройка консольной линии
+ password 7 0822455D0A16      ! Зашифрованный пароль для доступа к консоли
+ logging synchronous            ! Включить синхронное логирование для предотвращения прерывания ввода команд сообщениями
+ login                          ! Требовать аутентификацию для доступа к консоли
+!
+line vty 0 4                   ! Настройка виртуальных терминальных линий (VTY) для удаленного доступа (SSH/Telnet)
+ access-class 10 in             ! Применить список контроля доступа (ACL) 10 для входящего трафика
+ transport input ssh            ! Разрешить только SSH подключения
+ login local                    ! Использовать локальную базу данных пользователей для аутентификации
+!
+mls qos                        ! Включить QoS (Качество обслуживания) на уровне MLS (Multi-Layer Switching)
+!
+vlan 10                        ! Создать VLAN 10
+ name Management                ! Присвоить VLAN 10 имя "Management"
+vlan 20                        ! Создать VLAN 20
+ name Sales                     ! Присвоить VLAN 20 имя "Sales"
+vlan 30                        ! Создать VLAN 30
+ name Marketing                 ! Присвоить VLAN 30 имя "Marketing"
+vlan 40                        ! Создать VLAN 40
+ name IT                        ! Присвоить VLAN 40 имя "IT"
+vlan 50                        ! Создать VLAN 50
+ name Guest                     ! Присвоить VLAN 50 имя "Guest"
+vlan 60                        ! Создать VLAN 60
+ name VoIP                      ! Присвоить VLAN 60 имя "VoIP"
+vlan 999                       ! Создать VLAN 999
+ name NATIVE_VLAN               ! Присвоить VLAN 999 имя "NATIVE_VLAN" (используется как Native VLAN для транков)
+!
+access-list 10 permit 10.0.10.0 0.0.0.255  ! Разрешить трафик из сети 10.0.10.0/24 в ACL 10
+access-list 10 permit 10.1.10.0 0.0.0.255  ! Разрешить трафик из сети 10.1.10.0/24 в ACL 10
+access-list 10 permit 10.2.10.0 0.0.0.255  ! Разрешить трафик из сети 10.2.10.0/24 в ACL 10
+!
+spanning-tree portfast default           ! Включить Portfast по умолчанию на всех портах доступа
+spanning-tree portfast bpduguard default ! Включить BPDU Guard по умолчанию на всех портах с Portfast для предотвращения петель
+!
+interface Vlan10               ! Настройка интерфейса VLAN 10 (SVI - Switched Virtual Interface)
+ ip address 10.1.10.7 255.255.255.0  ! Установить IP-адрес для интерфейса VLAN 10
+ no shutdown                    ! Включить интерфейс
+!
+ip default-gateway 10.1.10.1   ! Установить шлюз по умолчанию для коммутатора
+!
+interface GigabitEthernet0/1       ! Настройка интерфейса GigabitEthernet0/1
+ description Connected to BR1-L3-SW1 Gi1/0/2  ! Описание интерфейса
+ switchport trunk encapsulation dot1q       ! Установить инкапсуляцию транка Dot1q
+ switchport mode trunk                      ! Установить режим порта как транковый
+ switchport trunk native vlan 999           ! Установить Native VLAN для транка в 999
+ switchport trunk allowed vlan 10,20,30,40,50,60 ! Разрешить передачу указанных VLAN через транк
+ mls qos trust dscp                         ! Доверять значениям DSCP для QoS на этом порту
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/1          ! Настройка интерфейса FastEthernet0/1
+ description Connected to Management PC  ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ (access)
+ switchport access vlan 10                  ! Назначить порт VLAN 10
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 1         ! Разрешить только 1 MAC-адрес на порту
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/2          ! Настройка интерфейса FastEthernet0/2
+ description Connected to IT PC         ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 40                  ! Назначить порт VLAN 40
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 1         ! Разрешить только 1 MAC-адрес на порту
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/3          ! Настройка интерфейса FastEthernet0/3
+ description Connected to Sales PC      ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 20                  ! Назначить порт VLAN 20
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 1         ! Разрешить только 1 MAC-адрес на порту
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/20         ! Настройка интерфейса FastEthernet0/20
+ description Connected to VoIP Phone  ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 40                  ! Назначить порт VLAN 40 (для данных)
+ switchport voice vlan 60                   ! Назначить голосовой VLAN 60
+ auto qos voip trust                        ! Включить автоматический QoS для VoIP, доверяя меткам QoS
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 2         ! Разрешить до 2 MAC-адресов на порту (для телефона и ПК за ним)
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface range FastEthernet0/4-19, FastEthernet0/21-24  ! Настройка диапазона интерфейсов FastEthernet0/4-19 и FastEthernet0/21-24
+ shutdown                                   ! Отключить эти интерфейсы
+!
+end
+
+
+
+! -----------------------------------------------------------------
+! BR1-L2-SW2 Switch Configuration
+! -----------------------------------------------------------------
+hostname BR1-L2-SW2
+!
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Зашифрованный пароль для привилегированного режима (enable secret)
+service password-encryption                    ! Включить шифрование всех паролей в конфигурации
+!
+username admin privilege 15 secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Создание пользователя 'admin' с полными привилегиями (уровень 15) и зашифрованным паролем
+!
+banner motd ^CUnauthorized access prohibited!^C  ! Установка баннера "сообщения дня" (Message Of The Day), отображаемого при входе.
+!
+no ip domain-lookup            ! Отключить поиск доменных имен для предотвращения задержек при ошибочном вводе команд
+ip domain-name br1.local       ! Установить имя домена для устройства
+!
+crypto key generate rsa general-keys modulus 2048  ! Сгенерировать RSA ключи для SSH с длиной модуля 2048 бит
+ip ssh version 2               ! Включить SSH версии 2
+!
+line console 0                 ! Настройка консольной линии
+ password 7 0822455D0A16      ! Зашифрованный пароль для доступа к консоли
+ logging synchronous            ! Включить синхронное логирование для предотвращения прерывания ввода команд сообщениями
+ login                          ! Требовать аутентификацию для доступа к консоли
+!
+line vty 0 4                   ! Настройка виртуальных терминальных линий (VTY) для удаленного доступа (SSH/Telnet)
+ access-class 10 in             ! Применить список контроля доступа (ACL) 10 для входящего трафика
+ transport input ssh            ! Разрешить только SSH подключения
+ login local                    ! Использовать локальную базу данных пользователей для аутентификации
+!
+mls qos                        ! Включить QoS (Качество обслуживания) на уровне MLS (Multi-Layer Switching)
+!
+vlan 10                        ! Создать VLAN 10
+ name Management                ! Присвоить VLAN 10 имя "Management"
+vlan 20                        ! Создать VLAN 20
+ name Sales                     ! Присвоить VLAN 20 имя "Sales"
+vlan 30                        ! Создать VLAN 30
+ name Marketing                 ! Присвоить VLAN 30 имя "Marketing"
+vlan 40                        ! Создать VLAN 40
+ name IT                        ! Присвоить VLAN 40 имя "IT"
+vlan 50                        ! Создать VLAN 50
+ name Guest                     ! Присвоить VLAN 50 имя "Guest"
+vlan 60                        ! Создать VLAN 60
+ name VoIP                      ! Присвоить VLAN 60 имя "VoIP"
+vlan 999                       ! Создать VLAN 999
+ name NATIVE_VLAN               ! Присвоить VLAN 999 имя "NATIVE_VLAN" (используется как Native VLAN для транков)
+!
+access-list 10 permit 10.0.10.0 0.0.0.255  ! Разрешить трафик из сети 10.0.10.0/24 в ACL 10
+access-list 10 permit 10.1.10.0 0.0.0.255  ! Разрешить трафик из сети 10.1.10.0/24 в ACL 10
+access-list 10 permit 10.2.10.0 0.0.0.255  ! Разрешить трафик из сети 10.2.10.0/24 в ACL 10
+!
+spanning-tree portfast default           ! Включить Portfast по умолчанию на всех портах доступа
+spanning-tree portfast bpduguard default ! Включить BPDU Guard по умолчанию на всех портах с Portfast для предотвращения петель
+!
+interface Vlan10               ! Настройка интерфейса VLAN 10 (SVI - Switched Virtual Interface)
+ ip address 10.1.10.9 255.255.255.0  ! Установить IP-адрес для интерфейса VLAN 10
+ no shutdown                    ! Включить интерфейс
+!
+ip default-gateway 10.1.10.1   ! Установить шлюз по умолчанию для коммутатора
+!
+interface GigabitEthernet0/1       ! Настройка интерфейса GigabitEthernet0/1
+ description Connected to BR1-L3-SW1 Gi1/0/3  ! Описание интерфейса
+ switchport trunk encapsulation dot1q       ! Установить инкапсуляцию транка Dot1q
+ switchport mode trunk                      ! Установить режим порта как транковый
+ switchport trunk native vlan 999           ! Установить Native VLAN для транка в 999
+ switchport trunk allowed vlan 10,20,30,40,50,60 ! Разрешить передачу указанных VLAN через транк
+ mls qos trust dscp                         ! Доверять значениям DSCP для QoS на этом порту
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/1          ! Настройка интерфейса FastEthernet0/1
+ description Connected to IT PC         ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ (access)
+ switchport access vlan 40                  ! Назначить порт VLAN 40
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 1         ! Разрешить только 1 MAC-адрес на порту
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/2          ! Настройка интерфейса FastEthernet0/2
+ description Connected to Sales PC      ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 20                  ! Назначить порт VLAN 20
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 1         ! Разрешить только 1 MAC-адрес на порту
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/3          ! Настройка интерфейса FastEthernet0/3
+ description Connected to Guest PC      ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 50                  ! Назначить порт VLAN 50
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 1         ! Разрешить только 1 MAC-адрес на порту
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/4          ! Настройка интерфейса FastEthernet0/4
+ description Connected to Sales PC      ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 20                  ! Назначить порт VLAN 20
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 1         ! Разрешить только 1 MAC-адрес на порту
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/20         ! Настройка интерфейса FastEthernet0/20
+ description Connected to VoIP Phone  ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 40                  ! Назначить порт VLAN 40 (для данных)
+ switchport voice vlan 60                   ! Назначить голосовой VLAN 60
+ auto qos voip trust                        ! Включить автоматический QoS для VoIP, доверяя меткам QoS
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 2         ! Разрешить до 2 MAC-адресов на порту (для телефона и ПК за ним)
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface range FastEthernet0/5-19, FastEthernet0/21-24  ! Настройка диапазона интерфейсов FastEthernet0/5-19 и FastEthernet0/21-24
+ shutdown                                   ! Отключить эти интерфейсы
+!
+interface GigabitEthernet0/2       ! Настройка интерфейса GigabitEthernet0/2
+ shutdown                           ! Отключить интерфейс
+!
+end
+
+
+
+! =================================================================
+! BR2-Router Configuration
+! =================================================================
+service password-encryption          ! Включить шифрование всех паролей в конфигурации
+!
+hostname BR2-Router                  ! Имя хоста маршрутизатора
+!
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Зашифрованный пароль для привилегированного режима
+!
+ip dhcp excluded-address 10.2.10.1   ! Исключить IP-адреса из пулов DHCP (например, для шлюзов или статических назначений)
+ip dhcp excluded-address 10.2.20.1
+ip dhcp excluded-address 10.2.30.1
+ip dhcp excluded-address 10.2.40.1
+ip dhcp excluded-address 10.2.50.1
+ip dhcp excluded-address 10.2.60.1
+ip dhcp excluded-address 10.2.10.6
+ip dhcp excluded-address 10.2.10.8
+ip dhcp excluded-address 10.2.10.10
+!
+ip dhcp pool MANAGEMENT_VLAN         ! DHCP пул для VLAN управления
+ network 10.2.10.0 255.255.255.0     ! Сеть и маска
+ default-router 10.2.10.1          ! Шлюз по умолчанию для клиентов DHCP
+ option 150 ip 192.168.255.1       ! IP-адрес сервера TFTP (для IP-телефонов)
+ dns-server 8.8.8.8                ! DNS-сервер для клиентов DHCP
+ip dhcp pool SALES_VLAN              ! DHCP пул для VLAN продаж
+ network 10.2.20.0 255.255.255.0
+ default-router 10.2.20.1
+ option 150 ip 192.168.255.1
+ dns-server 8.8.8.8
+ip dhcp pool MARKETING_VLAN          ! DHCP пул для VLAN маркетинга
+ network 10.2.30.0 255.255.255.0
+ default-router 10.2.30.1
+ option 150 ip 192.168.255.1
+ dns-server 8.8.8.8
+ip dhcp pool IT_VLAN                 ! DHCP пул для VLAN ИТ
+ network 10.2.40.0 255.255.255.0
+ default-router 10.2.40.1
+ option 150 ip 192.168.255.1
+ dns-server 8.8.8.8
+ip dhcp pool GUEST_VLAN              ! DHCP пул для гостевого VLAN
+ network 10.2.50.0 255.255.255.0
+ default-router 10.2.50.1
+ dns-server 8.8.8.8
+ip dhcp pool VOIP_VLAN               ! DHCP пул для VLAN VoIP
+ network 10.2.60.0 255.255.255.0
+ default-router 10.2.60.1
+ option 150 ip 192.168.255.1
+ dns-server 8.8.8.8
+!
+ip cef                               ! Включить Cisco Express Forwarding (CEF) для быстрой коммутации пакетов
+no ipv6 cef                          ! Отключить IPv6 CEF
+!
+username admin privilege 15 secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Создание пользователя 'admin' с полными привилегиями (уровень 15) и зашифрованным паролем
+!
+no ip domain-lookup                  ! Отключить поиск доменных имен для предотвращения задержек при ошибочном вводе команд
+ip domain-name br2.local             ! Установить имя домена для устройства
+!
+class-map match-any VOICE            ! Класс-карта для голосового трафика (VoIP)
+ match ip dscp ef                  ! Сопоставить трафик с DSCP EF (Expedited Forwarding)
+ match ip precedence 5             ! Сопоставить трафик с IP-приоритетом 5
+class-map match-any CALL-SIGNALING   ! Класс-карта для трафика сигнализации вызовов
+ match ip dscp cs3                 ! Сопоставить трафик с DSCP CS3
+ match ip precedence 3             ! Сопоставить трафик с IP-приоритетом 3
+class-map match-any DATA             ! Класс-карта для трафика данных
+ match not ip dscp cs6              ! Сопоставить весь трафик, кроме DSCP CS6
+ match not ip precedence 6          ! Сопоставить весь трафик, кроме IP-приоритета 6
+!
+policy-map WAN-QoS-Policy            ! Политика QoS для WAN-соединения
+ class VOICE                       ! Для класса VOICE
+  priority percent 30                ! Выделить 30% пропускной способности с приоритетом
+ class CALL-SIGNALING              ! Для класса CALL-SIGNALING
+  bandwidth remaining percent 10     ! Выделить 10% оставшейся пропускной способности
+ class DATA                        ! Для класса DATA
+  bandwidth remaining percent 60     ! Выделить 60% оставшейся пропускной способности
+  random-detect                    ! Включить Random Early Detection (RED) для предотвращения перегрузок
+ class class-default               ! Для всего остального трафика
+  fair-queue                       ! Использовать справедливую очередь
+!
+access-list 10 permit 10.0.10.0 0.0.0.255  ! Стандартный ACL 10: разрешить сети 10.0.10.0/24
+access-list 10 permit 10.1.10.0 0.0.0.255  ! Разрешить сети 10.1.10.0/24
+access-list 10 permit 10.2.10.0 0.0.0.255  ! Разрешить сети 10.2.10.0/24
+!
+access-list 100 permit ip 10.0.10.0 0.0.0.255 any  ! Расширенный ACL 100: разрешить IP-трафик из 10.0.10.0/24 к любому назначению
+access-list 100 permit ip 10.0.20.0 0.0.0.255 any
+access-list 100 permit ip 10.0.30.0 0.0.0.255 any
+access-list 100 permit ip 10.0.40.0 0.0.0.255 any
+access-list 100 permit ip 10.0.50.0 0.0.0.255 any
+access-list 100 permit ip 10.0.60.0 0.0.0.255 any
+access-list 100 permit ip 10.1.10.0 0.0.0.255 any
+access-list 100 permit ip 10.1.20.0 0.0.0.255 any
+access-list 100 permit ip 10.1.30.0 0.0.0.255 any
+access-list 100 permit ip 10.1.40.0 0.0.0.255 any
+access-list 100 permit ip 10.1.50.0 0.0.0.255 any
+access-list 100 permit ip 10.1.60.0 0.0.0.255 any
+access-list 100 permit ip 10.2.10.0 0.0.0.255 any
+access-list 100 permit ip 10.2.20.0 0.0.0.255 any
+access-list 100 permit ip 10.2.30.0 0.0.0.255 any
+access-list 100 permit ip 10.2.40.0 0.0.0.255 any
+access-list 100 permit ip 10.2.50.0 0.0.0.255 any
+access-list 100 permit ip 10.2.60.0 0.0.0.255 any
+!
+access-list 110 permit udp any any range 1719 1720  ! Расширенный ACL 110: разрешить UDP-трафик в диапазоне портов 1719-1720 (H.323)
+access-list 110 permit udp any any eq 5060           ! Разрешить UDP-трафик на порт 5060 (SIP)
+access-list 110 permit tcp any any eq 5060           ! Разрешить TCP-трафик на порт 5060 (SIP)
+access-list 110 permit tcp any any range 2000 2020    ! Разрешить TCP-трафик в диапазоне портов 2000-2020
+!
+route-map VOIP_POLICY_IN permit 10                 ! Route-map VOIP_POLICY_IN, последовательность 10
+ match ip address 110                            ! Сопоставить трафик с ACL 110
+ set ip precedence 5                             ! Установить IP-приоритет 5
+ set ip dscp ef                                  ! Установить DSCP EF
+!
+interface FastEthernet0/0.10                       ! Субинтерфейс FastEthernet0/0.10 для VLAN 10 (Management)
+ encapsulation dot1Q 10                           ! Инкапсуляция Dot1Q для VLAN 10
+ ip address 10.2.10.1 255.255.255.0               ! IP-адрес субинтерфейса
+ no shutdown                                      ! Включить субинтерфейс
+!
+interface FastEthernet0/0.20                       ! Субинтерфейс FastEthernet0/0.20 для VLAN 20 (Sales)
+ encapsulation dot1Q 20
+ ip address 10.2.20.1 255.255.255.0
+ no shutdown
+!
+interface FastEthernet0/0.30                       ! Субинтерфейс FastEthernet0/0.30 для VLAN 30 (Marketing)
+ encapsulation dot1Q 30
+ ip address 10.2.30.1 255.255.255.0
+ no shutdown
+!
+interface FastEthernet0/0.40                       ! Субинтерфейс FastEthernet0/0.40 для VLAN 40 (IT)
+ encapsulation dot1Q 40
+ ip address 10.2.40.1 255.255.255.0
+ no shutdown
+!
+interface FastEthernet0/0.50                       ! Субинтерфейс FastEthernet0/0.50 для VLAN 50 (Guest)
+ encapsulation dot1Q 50
+ ip address 10.2.50.1 255.255.255.0
+ no shutdown
+!
+interface FastEthernet0/0.60                       ! Субинтерфейс FastEthernet0/0.60 для VLAN 60 (VoIP)
+ encapsulation dot1Q 60
+ ip address 10.2.60.1 255.255.255.0
+ ip policy route-map VOIP_POLICY_IN in            ! Применить политику маршрутизации VOIP_POLICY_IN для входящего трафика
+ no shutdown
+!
+interface FastEthernet0/1                          ! Интерфейс FastEthernet0/1
+ shutdown                                         ! Отключить интерфейс
+!
+interface Serial1/0                                ! Последовательный интерфейс Serial1/0
+ no ip address                                    ! Без IP-адреса на основном интерфейсе
+ encapsulation frame-relay                        ! Инкапсуляция Frame Relay
+ frame-relay lmi-type cisco                       ! Тип LMI Cisco для Frame Relay
+ service-policy output WAN-QoS-Policy             ! Применить политику QoS WAN-QoS-Policy для исходящего трафика
+ no shutdown                                      ! Включить интерфейс
+!
+interface Serial1/0.301 point-to-point             ! Субинтерфейс Serial1/0.301 для соединения с HQ-Router (точка-точка)
+ description Connection to HQ-Router              ! Описание соединения
+ frame-relay interface-dlci 301                   ! DLCI Frame Relay
+ bandwidth 64                                     ! Пропускная способность 64 Кбит/с
+ ip address 10.255.0.6 255.255.255.252            ! IP-адрес субинтерфейса
+ no shutdown                                      ! Включить субинтерфейс
+!
+interface Serial1/0.302 point-to-point             ! Субинтерфейс Serial1/0.302 для соединения с BR1-Router (точка-точка)
+ description Connection to BR1-Router             ! Описание соединения
+ frame-relay interface-dlci 302                   ! DLCI Frame Relay
+ bandwidth 64                                     ! Пропускная способность 64 Кбит/с
+ ip address 10.255.0.10 255.255.255.252           ! IP-адрес субинтерфейса
+ no shutdown                                      ! Включить субинтерфейс
+!
+interface Serial1/1                                ! Последовательный интерфейс Serial1/1
+ shutdown                                         ! Отключить интерфейс
+interface Serial1/2                                ! Последовательный интерфейс Serial1/2
+ shutdown                                         ! Отключить интерфейс
+interface Serial1/3                                ! Последовательный интерфейс Serial1/3
+ shutdown                                         ! Отключить интерфейс
+!
+router ospf 1                                      ! Конфигурация протокола маршрутизации OSPF, процесс 1
+ router-id 192.168.255.3                          ! Идентификатор маршрутизатора OSPF
+ log-adjacency-changes                            ! Логировать изменения смежности
+ passive-interface default                        ! Все интерфейсы по умолчанию пассивны (не отправляют обновления OSPF)
+ no passive-interface Serial1/0.301               ! Сделать субинтерфейс Serial1/0.301 активным (отправлять обновления OSPF)
+ no passive-interface Serial1/0.302               ! Сделать субинтерфейс Serial1/0.302 активным (отправлять обновления OSPF)
+ network 10.2.10.0 0.0.0.255 area 0               ! Объявить сети в области OSPF 0
+ network 10.2.20.0 0.0.0.255 area 0
+ network 10.2.30.0 0.0.0.255 area 0
+ network 10.2.40.0 0.0.0.255 area 0
+ network 10.2.50.0 0.0.0.255 area 0
+ network 10.2.60.0 0.0.0.255 area 0
+ network 10.255.0.4 0.0.0.3 area 0
+ network 10.255.0.8 0.0.0.3 area 0
+ network 192.168.255.3 0.0.0.0 area 0
+ default-information originate                    ! Передавать маршрут по умолчанию в OSPF
+!
+telephony-service                                  ! Настройка сервиса IP-телефонии
+ max-ephones 20                                   ! Максимальное количество IP-телефонов
+ max-dn 40                                        ! Максимальное количество номеров телефонов
+ ip source-address 192.168.255.1 port 2000        ! Исходный IP-адрес и порт для IP-телефонии
+ auto assign 1 to 20                              ! Автоматически назначать номера телефонам
+ create cnf-files                                 ! Создавать файлы конфигурации для телефонов
+!
+ephone-dn 13                                       ! Настройка номера телефона 13
+ number 3001                                      ! Номер телефона
+ephone-dn 14                                       ! Настройка номера телефона 14
+ number 3002                                      ! Номер телефона
+ephone-dn 15                                       ! Настройка номера телефона 15
+ number 3003                                      ! Номер телефона
+ephone-dn 16                                       ! Настройка номера телефона 16
+ number 3004                                      ! Номер телефона
+ephone-dn 17                                       ! Настройка номера телефона 17
+ number 3005                                      ! Номер телефона
+ephone-dn 18                                       ! Настройка номера телефона 18
+ number 3006                                      ! Номер телефона
+!
+ephone 13                                          ! Настройка IP-телефона 13
+ mac-address 0001.6373.E2D3                         ! MAC-адрес телефона
+ type 7960                                        ! Тип телефона
+ button 1:13                                      ! Назначить кнопку 1 номеру 13
+!
+ephone 14                                          ! Настройка IP-телефона 14
+ mac-address 0001.6373.E2D4
+ type 7960
+ button 1:14
+!
+ephone 15                                          ! Настройка IP-телефона 15
+ mac-address 0001.6373.E2D5
+ type 7960
+ button 1:15
+!
+ephone 16                                          ! Настройка IP-телефона 16
+ mac-address 0001.6373.E2D6
+ type 7960
+ button 1:16
+!
+ephone 17                                          ! Настройка IP-телефона 17
+ mac-address 0001.6373.E2D7
+ type 7960
+ button 1:17
+!
+ephone 18                                          ! Настройка IP-телефона 18
+ mac-address 0001.6373.E2D8
+ type 7960
+ button 1:18
+!
+end
+
+
+
+! -----------------------------------------------------------------
+! BR2-L3-SW1 Switch Configuration
+! -----------------------------------------------------------------
+hostname BR2-L3-SW1
+!
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Зашифрованный пароль для привилегированного режима (enable secret)
+service password-encryption                    ! Включить шифрование всех паролей в конфигурации
+!
+username admin privilege 15 secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Создание пользователя 'admin' с полными привилегиями (уровень 15) и зашифрованным паролем
+!
+banner motd ^CUnauthorized access prohibited!^C  ! Установка баннера "сообщения дня" (Message Of The Day), отображаемого при входе.
+!
+no ip domain-lookup            ! Отключить поиск доменных имен для предотвращения задержек при ошибочном вводе команд
+ip domain-name br2.local       ! Установить имя домена для устройства
+!
+crypto key generate rsa general-keys modulus 2048  ! Сгенерировать RSA ключи для SSH с длиной модуля 2048 бит
+ip ssh version 2               ! Включить SSH версии 2
+!
+line console 0                 ! Настройка консольной линии
+ password 7 0822455D0A16      ! Зашифрованный пароль для доступа к консоли
+ logging synchronous            ! Включить синхронное логирование для предотвращения прерывания ввода команд сообщениями
+ login                          ! Требовать аутентификацию для доступа к консоли
+!
+line vty 0 4                   ! Настройка виртуальных терминальных линий (VTY) для удаленного доступа (SSH/Telnet)
+ access-class 10 in             ! Применить список контроля доступа (ACL) 10 для входящего трафика
+ transport input ssh            ! Разрешить только SSH подключения
+ login local                    ! Использовать локальную базу данных пользователей для аутентификации
+!
+no ip routing                  ! Отключить IP-маршрутизацию (так как это L3-коммутатор, маршрутизация будет включена через SVI)
+ip default-gateway 10.2.10.1   ! Установить шлюз по умолчанию для коммутатора
+!
+spanning-tree vlan 1-4094 root primary  ! Установить коммутатор в качестве первичного корневого моста для всех VLAN
+!
+mls qos                        ! Включить QoS (Качество обслуживания) на уровне MLS (Multi-Layer Switching)
+!
+vlan 10                        ! Создать VLAN 10
+ name Management                ! Присвоить VLAN 10 имя "Management"
+vlan 20                        ! Создать VLAN 20
+ name Sales                     ! Присвоить VLAN 20 имя "Sales"
+vlan 30                        ! Создать VLAN 30
+ name Marketing                 ! Присвоить VLAN 30 имя "Marketing"
+vlan 40                        ! Создать VLAN 40
+ name IT                        ! Присвоить VLAN 40 имя "IT"
+vlan 50                        ! Создать VLAN 50
+ name Guest                     ! Присвоить VLAN 50 имя "Guest"
+vlan 60                        ! Создать VLAN 60
+ name VoIP                      ! Присвоить VLAN 60 имя "VoIP"
+vlan 999                       ! Создать VLAN 999
+ name NATIVE_VLAN               ! Присвоить VLAN 999 имя "NATIVE_VLAN" (используется как Native VLAN для транков)
+!
+access-list 10 permit 10.0.10.0 0.0.0.255  ! Разрешить трафик из сети 10.0.10.0/24 в ACL 10
+access-list 10 permit 10.1.10.0 0.0.0.255  ! Разрешить трафик из сети 10.1.10.0/24 в ACL 10
+access-list 10 permit 10.2.10.0 0.0.0.255  ! Разрешить трафик из сети 10.2.10.0/24 в ACL 10
+!
+interface Vlan10               ! Настройка интерфейса VLAN 10 (SVI - Switched Virtual Interface)
+ ip address 10.2.10.6 255.255.255.0  ! Установить IP-адрес для интерфейса VLAN 10
+ no shutdown                    ! Включить интерфейс
+!
+interface GigabitEthernet1/0/1     ! Настройка интерфейса GigabitEthernet1/0/1
+ description Connected to BR2-Router Fa0/0  ! Описание интерфейса
+ switchport trunk encapsulation dot1q     ! Установить инкапсуляцию транка Dot1q
+ switchport mode trunk                    ! Установить режим порта как транковый
+ switchport trunk native vlan 999         ! Установить Native VLAN для транка в 999
+ switchport trunk allowed vlan 10,20,30,40,50,60 ! Разрешить передачу указанных VLAN через транк
+ mls qos trust dscp                       ! Доверять значениям DSCP для QoS на этом порту
+ no shutdown                              ! Включить интерфейс
+!
+interface GigabitEthernet1/0/2     ! Настройка интерфейса GigabitEthernet1/0/2
+ description Connected to BR2-L2-SW1 Gi0/1  ! Описание интерфейса
+ switchport trunk encapsulation dot1q     ! Установить инкапсуляцию транка Dot1q
+ switchport mode trunk                    ! Установить режим порта как транковый
+ switchport trunk native vlan 999         ! Установить Native VLAN для транка в 999
+ switchport trunk allowed vlan 10,20,30,40,50,60 ! Разрешить передачу указанных VLAN через транк
+ mls qos trust dscp                       ! Доверять значениям DSCP для QoS на этом порту
+ no shutdown                              ! Включить интерфейс
+!
+interface GigabitEthernet1/0/3     ! Настройка интерфейса GigabitEthernet1/0/3
+ description Connected to BR2-L2-SW2 Gi0/1  ! Описание интерфейса
+ switchport trunk encapsulation dot1q     ! Установить инкапсуляцию транка Dot1q
+ switchport mode trunk                    ! Установить режим порта как транковый
+ switchport trunk native vlan 999         ! Установить Native VLAN для транка в 999
+ switchport trunk allowed vlan 10,20,30,40,50,60 ! Разрешить передачу указанных VLAN через транк
+ mls qos trust dscp                       ! Доверять значениям DSCP для QoS на этом порту
+ no shutdown                              ! Включить интерфейс
+!
+interface range GigabitEthernet1/0/4-24  ! Настройка диапазона интерфейсов GigabitEthernet1/0/4-24
+ shutdown                               ! Отключить эти интерфейсы
+!
+end
+
+
+
+! -----------------------------------------------------------------
+! Конфигурация коммутатора BR2-L2-SW1
+! -----------------------------------------------------------------
+hostname BR2-L2-SW1
+!
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Зашифрованный пароль для привилегированного режима (enable secret)
+service password-encryption                    ! Включить шифрование всех паролей в конфигурации
+!
+username admin privilege 15 secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Создание пользователя 'admin' с полными привилегиями (уровень 15) и зашифрованным паролем
+!
+banner motd ^CUnauthorized access prohibited!^C  ! Установка баннера "сообщения дня" (Message Of The Day), отображаемого при входе.
+!
+no ip domain-lookup            ! Отключить поиск доменных имен для предотвращения задержек при ошибочном вводе команд
+ip domain-name br2.local       ! Установить имя домена для устройства
+!
+crypto key generate rsa general-keys modulus 2048  ! Сгенерировать RSA ключи для SSH с длиной модуля 2048 бит
+ip ssh version 2               ! Включить SSH версии 2
+!
+line console 0                 ! Настройка консольной линии
+ password 7 0822455D0A16      ! Зашифрованный пароль для доступа к консоли
+ logging synchronous            ! Включить синхронное логирование для предотвращения прерывания ввода команд сообщениями
+ login                          ! Требовать аутентификацию для доступа к консоли
+!
+line vty 0 4                   ! Настройка виртуальных терминальных линий (VTY) для удаленного доступа (SSH/Telnet)
+ access-class 10 in             ! Применить список контроля доступа (ACL) 10 для входящего трафика
+ transport input ssh            ! Разрешить только SSH подключения
+ login local                    ! Использовать локальную базу данных пользователей для аутентификации
+!
+mls qos                        ! Включить QoS (Качество обслуживания) на уровне MLS (Multi-Layer Switching)
+!
+vlan 10                        ! Создать VLAN 10
+ name Management                ! Присвоить VLAN 10 имя "Management"
+vlan 20                        ! Создать VLAN 20
+ name Sales                     ! Присвоить VLAN 20 имя "Sales"
+vlan 30                        ! Создать VLAN 30
+ name Marketing                 ! Присвоить VLAN 30 имя "Marketing"
+vlan 40                        ! Создать VLAN 40
+ name IT                        ! Присвоить VLAN 40 имя "IT"
+vlan 50                        ! Создать VLAN 50
+ name Guest                     ! Присвоить VLAN 50 имя "Guest"
+vlan 60                        ! Создать VLAN 60
+ name VoIP                      ! Присвоить VLAN 60 имя "VoIP"
+vlan 999                       ! Создать VLAN 999
+ name NATIVE_VLAN               ! Присвоить VLAN 999 имя "NATIVE_VLAN" (используется как Native VLAN для транков)
+!
+access-list 10 permit 10.0.10.0 0.0.0.255  ! Разрешить трафик из сети 10.0.10.0/24 в ACL 10
+access-list 10 permit 10.1.10.0 0.0.0.255  ! Разрешить трафик из сети 10.1.10.0/24 в ACL 10
+access-list 10 permit 10.2.10.0 0.0.0.255  ! Разрешить трафик из сети 10.2.10.0/24 в ACL 10
+!
+spanning-tree portfast default           ! Включить Portfast по умолчанию на всех портах доступа
+spanning-tree portfast bpduguard default ! Включить BPDU Guard по умолчанию на всех портах с Portfast для предотвращения петель
+!
+interface Vlan10               ! Настройка интерфейса VLAN 10 (SVI - Switched Virtual Interface)
+ ip address 10.2.10.8 255.255.255.0  ! Установить IP-адрес для интерфейса VLAN 10
+ no shutdown                    ! Включить интерфейс
+!
+ip default-gateway 10.2.10.1   ! Установить шлюз по умолчанию для коммутатора
+!
+interface GigabitEthernet0/1       ! Настройка интерфейса GigabitEthernet0/1
+ description Connected to BR2-L3-SW1 Gi1/0/2  ! Описание интерфейса
+ switchport trunk encapsulation dot1q       ! Установить инкапсуляцию транка Dot1q
+ switchport mode trunk                      ! Установить режим порта как транковый
+ switchport trunk native vlan 999           ! Установить Native VLAN для транка в 999
+ switchport trunk allowed vlan 10,20,30,40,50,60 ! Разрешить передачу указанных VLAN через транк
+ mls qos trust dscp                         ! Доверять значениям DSCP для QoS на этом порту
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/1          ! Настройка интерфейса FastEthernet0/1
+ description Connected to IT PC         ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 40                  ! Назначить порт VLAN 40
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 1         ! Разрешить только 1 MAC-адрес на порту
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/2          ! Настройка интерфейса FastEthernet0/2
+ description Connected to Sales PC      ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 20                  ! Назначить порт VLAN 20
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 1         ! Разрешить только 1 MAC-адрес на порту
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/20         ! Настройка интерфейса FastEthernet0/20
+ description Connected to VoIP Phone  ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 40                  ! Назначить порт VLAN 40 (для данных)
+ switchport voice vlan 60                   ! Назначить голосовой VLAN 60
+ auto qos voip trust                        ! Включить автоматический QoS для VoIP, доверяя меткам QoS
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 2         ! Разрешить до 2 MAC-адресов на порту (для телефона и ПК за ним)
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface range FastEthernet0/3-19, FastEthernet0/21-24  ! Настройка диапазона интерфейсов FastEthernet0/3-19 и FastEthernet0/21-24
+ shutdown                                   ! Отключить эти интерфейсы
+!
+end
+
+
+
+! -----------------------------------------------------------------
+! Конфигурация коммутатора BR2-L2-SW2
+! -----------------------------------------------------------------
+hostname BR2-L2-SW2
+!
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Зашифрованный пароль для привилегированного режима (enable secret)
+service password-encryption                    ! Включить шифрование всех паролей в конфигурации
+!
+username admin privilege 15 secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0  ! Создание пользователя 'admin' с полными привилегиями (уровень 15) и зашифрованным паролем
+!
+banner motd ^CUnauthorized access prohibited!^C  ! Установка баннера "сообщения дня" (Message Of The Day), отображаемого при входе.
+!
+no ip domain-lookup            ! Отключить поиск доменных имен для предотвращения задержек при ошибочном вводе команд
+ip domain-name br2.local       ! Установить имя домена для устройства
+!
+crypto key generate rsa general-keys modulus 2048  ! Сгенерировать RSA ключи для SSH с длиной модуля 2048 бит
+ip ssh version 2               ! Включить SSH версии 2
+!
+line console 0                 ! Настройка консольной линии
+ password 7 0822455D0A16      ! Зашифрованный пароль для доступа к консоли
+ logging synchronous            ! Включить синхронное логирование для предотвращения прерывания ввода команд сообщениями
+ login                          ! Требовать аутентификацию для доступа к консоли
+!
+line vty 0 4                   ! Настройка виртуальных терминальных линий (VTY) для удаленного доступа (SSH/Telnet)
+ access-class 10 in             ! Применить список контроля доступа (ACL) 10 для входящего трафика
+ transport input ssh            ! Разрешить только SSH подключения
+ login local                    ! Использовать локальную базу данных пользователей для аутентификации
+!
+mls qos                        ! Включить QoS (Качество обслуживания) на уровне MLS (Multi-Layer Switching)
+!
+vlan 10                        ! Создать VLAN 10
+ name Management                ! Присвоить VLAN 10 имя "Management"
+vlan 20                        ! Создать VLAN 20
+ name Sales                     ! Присвоить VLAN 20 имя "Sales"
+vlan 30                        ! Создать VLAN 30
+ name Marketing                 ! Присвоить VLAN 30 имя "Marketing"
+vlan 40                        ! Создать VLAN 40
+ name IT                        ! Присвоить VLAN 40 имя "IT"
+vlan 50                        ! Создать VLAN 50
+ name Guest                     ! Присвоить VLAN 50 имя "Guest"
+vlan 60                        ! Создать VLAN 60
+ name VoIP                      ! Присвоить VLAN 60 имя "VoIP"
+vlan 999                       ! Создать VLAN 999
+ name NATIVE_VLAN               ! Присвоить VLAN 999 имя "NATIVE_VLAN" (используется как Native VLAN для транков)
+!
+access-list 10 permit 10.0.10.0 0.0.0.255  ! Разрешить трафик из сети 10.0.10.0/24 в ACL 10
+access-list 10 permit 10.1.10.0 0.0.0.255  ! Разрешить трафик из сети 10.1.10.0/24 в ACL 10
+access-list 10 permit 10.2.10.0 0.0.0.255  ! Разрешить трафик из сети 10.2.10.0/24 в ACL 10
+!
+spanning-tree portfast default           ! Включить Portfast по умолчанию на всех портах доступа
+spanning-tree portfast bpduguard default ! Включить BPDU Guard по умолчанию на всех портах с Portfast для предотвращения петель
+!
+interface Vlan10               ! Настройка интерфейса VLAN 10 (SVI - Switched Virtual Interface)
+ ip address 10.2.10.10 255.255.255.0  ! Установить IP-адрес для интерфейса VLAN 10
+ no shutdown                    ! Включить интерфейс
+!
+ip default-gateway 10.2.10.1   ! Установить шлюз по умолчанию для коммутатора
+!
+interface GigabitEthernet0/1       ! Настройка интерфейса GigabitEthernet0/1
+ description Connected to BR2-L3-SW1 Gi1/0/3  ! Описание интерфейса
+ switchport trunk encapsulation dot1q       ! Установить инкапсуляцию транка Dot1q
+ switchport mode trunk                      ! Установить режим порта как транковый
+ switchport trunk native vlan 999           ! Установить Native VLAN для транка в 999
+ switchport trunk allowed vlan 10,20,30,40,50,60 ! Разрешить передачу указанных VLAN через транк
+ mls qos trust dscp                         ! Доверять значениям DSCP для QoS на этом порту
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/1          ! Настройка интерфейса FastEthernet0/1
+ description Connected to Marketing PC  ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ (access)
+ switchport access vlan 30                  ! Назначить порт VLAN 30
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 1         ! Разрешить только 1 MAC-адрес на порту
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/2          ! Настройка интерфейса FastEthernet0/2
+ description Connected to Guest PC      ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 50                  ! Назначить порт VLAN 50
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 1         ! Разрешить только 1 MAC-адрес на порту
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/3          ! Настройка интерфейса FastEthernet0/3
+ description Connected to Management PC  ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 10                  ! Назначить порт VLAN 10
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 1         ! Разрешить только 1 MAC-адрес на порту
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/4          ! Настройка интерфейса FastEthernet0/4
+ description Connected to IT PC         ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 40                  ! Назначить порт VLAN 40
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 1         ! Разрешить только 1 MAC-адрес на порту
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface FastEthernet0/20         ! Настройка интерфейса FastEthernet0/20
+ description Connected to VoIP Phone  ! Описание интерфейса
+ switchport mode access                     ! Установить режим порта как доступ
+ switchport access vlan 40                  ! Назначить порт VLAN 40 (для данных)
+ switchport voice vlan 60                   ! Назначить голосовой VLAN 60
+ auto qos voip trust                        ! Включить автоматический QoS для VoIP, доверяя меткам QoS
+ switchport port-security                   ! Включить Port Security
+ switchport port-security maximum 2         ! Разрешить до 2 MAC-адресов на порту (для телефона и ПК за ним)
+ switchport port-security mac-address sticky  ! Разрешить динамическое изучение MAC-адресов и сохранение их в конфигурации (sticky)
+ switchport port-security violation restrict  ! При нарушении Port Security отбрасывать пакеты, но не отключать порт
+ spanning-tree portfast                     ! Включить Portfast для быстрого перехода в состояние forwarding
+ no shutdown                                ! Включить интерфейс
+!
+interface range FastEthernet0/5-19, FastEthernet0/21-24  ! Настройка диапазона интерфейсов FastEthernet0/5-19 и FastEthernet0/21-24
+ shutdown                                   ! Отключить эти интерфейсы
+!
+interface GigabitEthernet0/2       ! Настройка интерфейса GigabitEthernet0/2
+ shutdown                           ! Отключить интерфейс
+!
+end
